@@ -1,8 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { calculatePm25Aqi, calculateEuropeanCaqi } from '@/services/aqi-calculator';
-import { calculateDailyInhaledDosage, calculateBaselineDosage } from '@/services/dosage-calculator';
+import { calculatePm25Aqi } from '@/services/aqi-calculator';
+import { calculateDailyInhaledDosage } from '@/services/dosage-calculator';
 import { calculateDailyCarbonAbated } from '@/services/carbon-calculator';
-import { calculateMonthlyHealthSavings } from '@/services/economic-calculator';
 import { calculatePersonalHealthShieldScore } from '@/services/shield-calculator';
 import { SimulatorInputs, CommuteMode, MaskGrade } from '@/domain/types';
 
