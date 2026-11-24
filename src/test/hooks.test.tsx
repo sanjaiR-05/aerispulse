@@ -29,6 +29,7 @@ describe('Custom Hooks Architecture Suite', () => {
       expect(result.current.language).toBe('ta');
       expect(result.current.isDark).toBe(true);
       expect(document.documentElement.classList.contains('dark')).toBe(true);
+      expect(document.documentElement.lang).toBe('ta');
 
       act(() => {
         result.current.setIsDark(false);
@@ -43,7 +44,7 @@ describe('Custom Hooks Architecture Suite', () => {
       const { result } = renderHook(() => useTelemetry());
 
       expect(result.current.selectedPreset.id).toBe('delhi_ncr');
-      expect(result.current.telemetry.aqiUs).toBe(204);
+      expect(result.current.telemetry.aqiUs).toBe(180);
       expect(result.current.isRefreshing).toBe(false);
     });
 

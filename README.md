@@ -1,8 +1,8 @@
 # AerisPulse — Urban Air Quality & Climate Health Intelligence System
 
 [![CI/CD Pipeline](https://github.com/sanjaiR-05/aerispulse/actions/workflows/ci.yml/badge.svg)](https://github.com/sanjaiR-05/aerispulse/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-190%20passing-emerald)](https://github.com/sanjaiR-05/aerispulse)
-[![Coverage](https://img.shields.io/badge/coverage-98.3%25-brightgreen)](https://github.com/sanjaiR-05/aerispulse)
+[![Tests](https://img.shields.io/badge/tests-232%20passing-emerald)](https://github.com/sanjaiR-05/aerispulse)
+[![Coverage](https://img.shields.io/badge/coverage-99.3%25-brightgreen)](https://github.com/sanjaiR-05/aerispulse)
 [![WCAG](https://img.shields.io/badge/WCAG%202.2%20AA-0%20violations-blue)](https://github.com/sanjaiR-05/aerispulse)
 [![Next.js](https://img.shields.io/badge/Next.js-15.1.0-black)](https://nextjs.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
@@ -38,10 +38,13 @@ src/
 │   ├── economic-calculator.ts # Outpatient medication & sick day economic savings
 │   ├── shield-calculator.ts # Personal Health Shield Score (0-100)
 │   ├── telemetry-service.ts # Open-Meteo CAMS atmospheric telemetry client
+│   ├── fallback-telemetry.ts # Offline snapshots with calculator-derived AQI/CAQI
 │   ├── cache-service.ts     # In-memory Stale-While-Revalidate TTL cache
-│   ├── rate-limiter.ts      # Sliding-window IP rate limiter
+│   ├── rate-limiter.ts      # Sliding-window IP rate limiter with idle-IP eviction
+│   ├── api-guard.ts         # Shared CSRF + rate-limit policy for every route
+│   ├── sse-parser.ts        # Buffered Server-Sent Events decoder
 │   ├── fallback-service.ts  # Deterministic clinical rules engine (zero-downtime)
-│   └── genai-service.ts     # Google Gemini API with JSON Schema mode & failover
+│   └── genai-service.ts     # Google Gemini API with Zod-validated JSON and SSE normalisation
 ├── components/              # Accessible Semantic React Components
 │   ├── Header.tsx           # Language switcher, dark mode toggle, branding
 │   ├── MetroPresets.tsx     # 1-Click 5-second evaluation presets
@@ -57,6 +60,7 @@ src/
     ├── api/action-plan/     # Rate-limited structured action synthesis
     ├── api/chat/            # Rate-limited SSE streaming chat
     ├── api/health/          # Health check endpoint (HTTP 200)
+    ├── error.tsx            # Client error boundary with session recovery
     ├── layout.tsx           # Global root layout with skip navigation
     └── page.tsx             # Main client dashboard orchestration
 ```
@@ -107,7 +111,7 @@ npm run typecheck
 # Run ESLint quality inspection
 npm run lint
 
-# Run all 190 automated unit, integration & accessibility tests
+# Run all 232 automated unit, integration & accessibility tests
 npm test
 
 # Run tests with V8 coverage report
@@ -118,10 +122,10 @@ npm run build
 ```
 
 ### Verified Test Suite Breakdown:
-- **190 Automated Tests** across 17 test suites (100% passing).
-- **98.3% Statement & Line Coverage** across all domain, services, components, and API routes.
+- **232 Automated Tests** across 22 test suites (100% passing).
+- **99.3% Statement & Line Coverage**, **100% Function Coverage**, 89.9% branch coverage (thresholds enforced at 95/95/85).
 - **100% API Route Coverage** (`/api/health`, `/api/telemetry`, `/api/action-plan`, `/api/chat`).
-- **Production JS Bundle:** 123 KB First Load JS (under 250 KB target).
+- **Production JS Bundle:** 124 KB First Load JS (under 250 KB target).
 
 ---
 
@@ -138,6 +142,8 @@ npm install
 # 3. (Optional) Configure Gemini API Key
 # If omitted, AerisPulse automatically operates on its Deterministic Fallback Engine
 export GEMINI_API_KEY="your_api_key_here"
+# Optional: override the model (defaults to gemini-2.5-flash)
+export GEMINI_MODEL="gemini-2.5-flash"
 
 # 4. Start local development server
 npm run dev

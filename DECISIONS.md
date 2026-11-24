@@ -70,3 +70,15 @@
   - Provide full trilingual localization for English (`en`), Tamil (`ta`), and Hindi (`hi`).
   - Implement ARIA live regions (`aria-live="polite"`) for real-time telemetry updates and simulator recalculations.
   - Test via Vitest and `@axe-core/react` to enforce 0 accessibility violations.
+
+---
+
+## ADR 008: Single-Source Constants, Shared API Guard & Validated Model Output
+- **Status:** Accepted
+- **Context:** Quantitative tables (emission factors, shield weights, rate-limit policy), fallback telemetry snapshots, and route-level security guards had drifted into multiple copies. Hand-authored fallback indices could disagree with the calculators, and an LLM response was consumed without shape validation.
+- **Decision:**
+  1. Declare every physical/economic coefficient once in `src/domain/constants.ts` (`CARBON_EMISSION_FACTORS`, `SHIELD_WEIGHTS`, `TRANSIT_SPEED_KMH`, `RATE_LIMIT`, timeout and cache lifetimes) and consume those tables directly from services.
+  2. Store only measured concentrations for offline snapshots (`CALIBRATED_POLLUTANT_PROFILES`) and derive AQI/CAQI through `aqi-calculator.ts`, so the fallback can never contradict the live path.
+  3. Centralize CSRF and rate-limit enforcement in `api-guard.ts`, applied identically by every route handler, with advertised headers matching enforced policy.
+  4. Validate model output with `ActionPlanAiResponseSchema` and normalise Gemini's SSE frames into the `{ text }` envelope consumed by the client, rejecting malformed payloads in favour of the deterministic engine.
+- **Consequences:** One place to change a coefficient, no divergent demo figures, consistent guard behaviour, and no silent empty AI responses.

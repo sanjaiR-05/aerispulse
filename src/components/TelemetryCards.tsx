@@ -69,9 +69,15 @@ export const TelemetryCards: React.FC<TelemetryCardsProps> = ({
           <span className="text-xs px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium border border-slate-200 dark:border-slate-700">
             {t.telemetryConfidence}: {telemetry.confidenceScore}%
           </span>
-          <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-md bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 font-bold border border-emerald-300 dark:border-emerald-800">
+          <span
+            className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-md font-bold border ${
+              telemetry.isVerified
+                ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800'
+                : 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800'
+            }`}
+          >
             <CheckCircle className="w-3.5 h-3.5" aria-hidden="true" />
-            {t.verified}
+            {telemetry.isVerified ? t.verified : t.baselineTelemetry}
           </span>
         </div>
       </div>

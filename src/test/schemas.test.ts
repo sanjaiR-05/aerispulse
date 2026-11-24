@@ -1,8 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import {
-  SimulatorInputsSchema,
+  ActionPlanAiResponseSchema,
   ActionPlanRequestSchema,
   ChatRequestSchema,
+  GeminiStreamChunkSchema,
+  SimulatorInputsSchema,
   TelemetryQuerySchema,
 } from '@/domain/schemas';
 
@@ -117,6 +119,39 @@ describe('Zod Schema Validation & Prompt Injection Defense', () => {
       },
     };
     expect(ActionPlanRequestSchema.safeParse(valid).success).toBe(true);
+  });
+
+  it('validates the structured GenAI action plan payload', () => {
+    const valid = {
+      executiveSummary: 'Severe stagnation episode.',
+      directives: [
+        {
+          category: 'indoor',
+          title: 'Seal windows',
+          urgency: 'CRITICAL',
+          description: 'Close all fenestration.',
+          impactMetricLabel: 'Impact Metric:',
+          impactMetricValue: '85% PM2.5 reduction',
+        },
+      ],
+    };
+    expect(ActionPlanAiResponseSchema.safeParse(valid).success).toBe(true);
+    expect(
+      ActionPlanAiResponseSchema.safeParse({ ...valid, directives: [] }).success
+    ).toBe(false);
+    expect(
+      ActionPlanAiResponseSchema.safeParse({ ...valid, executiveSummary: '' }).success
+    ).toBe(false);
+  });
+
+  it('validates Gemini streaming chunks with and without text parts', () => {
+    expect(GeminiStreamChunkSchema.safeParse({}).success).toBe(true);
+    expect(
+      GeminiStreamChunkSchema.safeParse({
+        candidates: [{ content: { parts: [{ text: 'Hello' }] } }],
+      }).success
+    ).toBe(true);
+    expect(GeminiStreamChunkSchema.safeParse({ candidates: 'invalid' }).success).toBe(false);
   });
 
   it('rejects action plan request with missing telemetry', () => {

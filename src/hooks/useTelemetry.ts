@@ -3,33 +3,13 @@
 import { useState, useCallback } from 'react';
 import { AtmosphericTelemetry, MetroPreset } from '@/domain/types';
 import { METRO_PRESETS } from '@/domain/constants';
+import { buildFallbackTelemetry } from '@/services/fallback-telemetry';
 
 /**
- * Calibrated initial baseline atmospheric telemetry state (Delhi NCR).
- * Follows EPA 454/B-18-007 and CAMS Atmospheric Chemistry standards.
+ * Calibrated initial atmospheric telemetry state (Delhi NCR), derived through the same
+ * deterministic calculators used by the offline fallback so no figure is hand-authored.
  */
-export const INITIAL_DELHI_TELEMETRY: AtmosphericTelemetry = {
-  cityId: 'delhi_ncr',
-  cityName: 'Delhi NCR',
-  timestamp: new Date().toISOString(),
-  aqiUs: 204,
-  aqiCategory: 'Very Unhealthy',
-  primaryPollutant: 'PM2.5',
-  primaryPollutantConcentration: 96.6,
-  europeanCaqi: 83,
-  confidenceScore: 90,
-  isVerified: true,
-  modelSource: 'Open-Meteo CAMS Atmospheric Model (Active Multi-Station Synthesis)',
-  coordinates: { latitude: 28.61, longitude: 77.21 },
-  pollutants: {
-    pm25: 96.6,
-    pm10: 99.0,
-    no2: 27.7,
-    so2: 22.8,
-    o3: 62.0,
-    co: 880.0,
-  },
-};
+export const INITIAL_DELHI_TELEMETRY: AtmosphericTelemetry = buildFallbackTelemetry('delhi_ncr');
 
 /**
  * Return interface for the `useTelemetry` custom hook.
@@ -54,7 +34,7 @@ export interface UseTelemetryResult {
 /**
  * Custom hook encapsulating atmospheric telemetry fetching, caching, and state management.
  *
- * @param initialData - Optional initial telemetry data (defaults to INITIAL_DELHI_TELEMETRY)
+ * @param initialData - Optional initial telemetry data (defaults to the derived Delhi snapshot)
  * @returns {UseTelemetryResult} Telemetry state and handler functions
  *
  * @example
@@ -81,7 +61,7 @@ export function useTelemetry(
         setTelemetry(data);
         setA11yMessage(`Updated atmospheric telemetry for ${data.cityName}. AQI is ${data.aqiUs}.`);
       }
-    } catch (_err) {
+    } catch {
       // Retain existing cached telemetry state on network interruption
     } finally {
       setIsRefreshing(false);

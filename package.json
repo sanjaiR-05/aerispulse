@@ -1,7 +1,12 @@
 {
   "name": "aerispulse",
   "version": "1.0.0",
+  "description": "Urban air quality and climate health intelligence: deterministic dosage, carbon and economic models with grounded GenAI synthesis.",
   "private": true,
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",

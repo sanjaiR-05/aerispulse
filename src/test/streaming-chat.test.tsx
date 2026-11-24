@@ -72,6 +72,45 @@ describe('StreamingChat Component Unit Suite', () => {
     });
   });
 
+  it('reassembles an SSE event split across network chunks', async () => {
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(encoder.encode('data: {"text":"Split '));
+        controller.enqueue(encoder.encode('response"}\n\ndata: [DONE]\n\n'));
+        controller.close();
+      },
+    });
+
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({ ok: true, body: stream } as Response);
+
+    render(<StreamingChat telemetry={mockTelemetry} language="en" />);
+    fireEvent.click(screen.getByText('Is it safe to jog outside right now?'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Split response')).toBeInTheDocument();
+    });
+  });
+
+  it('shows the localized offline notice when the stream cannot be opened', async () => {
+    vi.spyOn(globalThis, 'fetch').mockRejectedValueOnce(new Error('Network down'));
+
+    render(<StreamingChat telemetry={mockTelemetry} language="en" />);
+    fireEvent.click(screen.getByText('Which mask grade should I wear?'));
+
+    await waitFor(() => {
+      expect(screen.getByText(/Live guidance is temporarily unavailable/i)).toBeInTheDocument();
+    });
+  });
+
+  it('re-seeds the greeting when the locale changes before any conversation', () => {
+    const { rerender } = render(<StreamingChat telemetry={mockTelemetry} language="en" />);
+    expect(screen.getByText(/Hello! I am your AerisPulse/i)).toBeInTheDocument();
+
+    rerender(<StreamingChat telemetry={mockTelemetry} language="hi" />);
+    expect(screen.getByText(/नमस्ते! मैं आपका AerisPulse/i)).toBeInTheDocument();
+  });
+
   it('allows typing custom message into input field and sending', async () => {
     const mockStream = new ReadableStream({
       start(controller) {

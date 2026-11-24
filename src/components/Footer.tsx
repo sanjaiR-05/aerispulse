@@ -43,7 +43,7 @@ export const Footer: React.FC<FooterProps> = ({ language }): React.JSX.Element =
 
         <div className="flex items-center gap-4">
           <a
-            href="/docs/METHODOLOGY.md"
+            href="https://github.com/sanjaiR-05/aerispulse/blob/main/docs/METHODOLOGY.md"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 font-medium text-blue-600 dark:text-blue-400 hover:underline"

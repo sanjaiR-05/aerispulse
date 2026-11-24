@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { SlidingWindowRateLimiter } from '@/services/rate-limiter';
 
 describe('Sliding-Window In-Memory Rate Limiter', () => {
@@ -51,5 +51,35 @@ describe('Sliding-Window In-Memory Rate Limiter', () => {
 
     limiter.reset();
     expect(limiter.check('192.168.1.1').allowed).toBe(true);
+  });
+
+  it('evicts records whose requests have aged out of the window', () => {
+    vi.useFakeTimers();
+    try {
+      const capped = new SlidingWindowRateLimiter(1000, 2, 1);
+
+      capped.check('203.0.113.9');
+      vi.advanceTimersByTime(1500);
+
+      // Capacity is reached, so the aged-out record is evicted during this check.
+      expect(capped.check('203.0.113.10').allowed).toBe(true);
+      // The evicted IP therefore starts a fresh window instead of inheriting its history.
+      expect(capped.check('203.0.113.9').remaining).toBe(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('prunes aged-out records once the tracking table reaches capacity', () => {
+    const capped = new SlidingWindowRateLimiter(50, 2, 1);
+
+    capped.check('198.51.100.1');
+    // Second distinct IP forces a prune pass over the saturated table.
+    expect(capped.check('198.51.100.2').allowed).toBe(true);
+    expect(capped.check('198.51.100.2').remaining).toBe(0);
+
+    // The first IP was still inside the window, so it survives and is now blocked.
+    expect(capped.check('198.51.100.1').allowed).toBe(true);
+    expect(capped.check('198.51.100.1').allowed).toBe(false);
   });
 });

@@ -1,17 +1,13 @@
 import { SimulatorInputs } from '../domain/types';
+import { SHIELD_THRESHOLDS, SHIELD_WEIGHTS } from '../domain/constants';
 
 /**
  * Calculates the Personal Health Shield Score (0-100), an individual epidemiological defense index
  * combining respiratory barrier protection, indoor HEPA particulate clearance, transit mode attenuation,
  * and high-ventilation outdoor cardio exposure penalties under elevated AQI conditions.
  *
- * Scoring Weights:
- * - Baseline Defense: 10 pts
- * - Mask Grade: N95/FFP2 (+45 pts) | Surgical/Cloth (+20 pts) | None (+0 pts)
- * - Indoor True HEPA Recirculation: (+40 pts)
- * - Metro / Electric Bus Cabin: (+3 pts)
- * - Unprotected High-Exertion Cardio Penalty: Up to -5 pts/hour when AQI > 150
- * - Clean Ambient Air Bonus: AQI <= 50 (floor 85 pts) | AQI <= 100 (floor 65 pts)
+ * All weights are declared once in {@link SHIELD_WEIGHTS}, so the published methodology and the
+ * implementation share a single source of truth.
  *
  * @param inputs - Active lifestyle simulator behavioral inputs
  * @param aqi - Real-time US EPA Air Quality Index of the active region
@@ -33,37 +29,38 @@ export function calculatePersonalHealthShieldScore(
   inputs: SimulatorInputs,
   aqi: number
 ): number {
-  // Baseline score under severe ambient conditions
-  let score = 10;
+  let score: number = SHIELD_WEIGHTS.baseline;
 
-  // Mask protection contribution (up to 45 pts)
   if (inputs.maskGrade === 'n95_ffp2') {
-    score += 45;
+    score += SHIELD_WEIGHTS.maskN95;
   } else if (inputs.maskGrade === 'surgical_cloth') {
-    score += 20;
+    score += SHIELD_WEIGHTS.maskSurgical;
   }
 
-  // Indoor HEPA purifier contribution (up to 40 pts)
   if (inputs.indoorHepaActive) {
-    score += 40;
+    score += SHIELD_WEIGHTS.hepaActive;
   }
 
-  // Transit mode mitigation factor
   if (inputs.commuteMode === 'metro_electric_bus') {
-    score += 3;
+    score += SHIELD_WEIGHTS.metroTransit;
   }
 
-  // Penalty for outdoor cardio in high AQI without adequate protection
-  if (aqi > 150 && inputs.outdoorCardioHours > 1 && inputs.maskGrade !== 'n95_ffp2') {
-    score = Math.max(5, score - Math.round(inputs.outdoorCardioHours * 5));
+  // Unprotected high-exertion cardio during severe episodes is penalised per hour.
+  if (
+    aqi > SHIELD_THRESHOLDS.severeAqi &&
+    inputs.outdoorCardioHours > 1 &&
+    inputs.maskGrade !== 'n95_ffp2'
+  ) {
+    const penalty = Math.round(inputs.outdoorCardioHours * SHIELD_WEIGHTS.cardioPenaltyPerHour);
+    score = Math.max(SHIELD_WEIGHTS.cardioPenaltyFloor, score - penalty);
   }
 
-  // If ambient air is Good (AQI <= 50), baseline defense is naturally high
-  if (aqi <= 50) {
-    score = Math.max(85, score + 40);
-  } else if (aqi <= 100) {
-    score = Math.max(65, score + 20);
+  // Clean ambient air raises the natural defense floor regardless of protective equipment.
+  if (aqi <= SHIELD_THRESHOLDS.goodAqi) {
+    score = Math.max(SHIELD_WEIGHTS.goodAirFloor, score + SHIELD_WEIGHTS.goodAirBonus);
+  } else if (aqi <= SHIELD_THRESHOLDS.moderateAqi) {
+    score = Math.max(SHIELD_WEIGHTS.moderateAirFloor, score + SHIELD_WEIGHTS.moderateAirBonus);
   }
 
-  return Math.min(100, Math.max(0, score));
+  return Math.min(SHIELD_WEIGHTS.scoreCeiling, Math.max(SHIELD_WEIGHTS.scoreFloor, score));
 }

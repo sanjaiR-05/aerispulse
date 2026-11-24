@@ -103,7 +103,7 @@ export const ActionPlanSection: React.FC<ActionPlanSectionProps> = ({
           <div className="p-4 rounded-xl border border-blue-200 dark:border-blue-900/60 bg-blue-50/50 dark:bg-blue-950/30">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-1.5">
               <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                ACTION PLAN EXECUTIVE SYNTHESIS
+                {t.executiveSynthesis}
               </span>
               <span className="text-[11px] font-semibold text-blue-700 dark:text-blue-300 font-mono">
                 {actionPlan.engineSource}

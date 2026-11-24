@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { generateActionPlanWithAI, streamGroundedChat } from '@/services/genai-service';
+import {
+  generateActionPlanWithAI,
+  normaliseGeminiStream,
+  streamGroundedChat,
+} from '@/services/genai-service';
 import { SimulatorInputs } from '@/domain/types';
 
 describe('GenAI Service (Gemini API & Fallback)', () => {
@@ -71,7 +75,7 @@ describe('GenAI Service (Gemini API & Fallback)', () => {
     } as Response);
 
     const plan = await generateActionPlanWithAI(defaultParams);
-    expect(plan.engineSource).toBe('Google Gemini 2.0 / 1.5');
+    expect(plan.engineSource).toBe('Google Gemini (Live Model)');
     expect(plan.executiveSummary).toBe('AI generated executive summary');
     expect(plan.directives[0]?.title).toBe('AI Indoor Directive');
   });
@@ -121,6 +125,93 @@ describe('GenAI Service (Gemini API & Fallback)', () => {
 
     const stream = await streamGroundedChat('Which mask?', 'Delhi NCR', 204, 96.6, 'en');
     expect(stream).toBeDefined();
+  });
+
+  it('rejects model output that violates the directive schema', async () => {
+    process.env.GEMINI_API_KEY = 'test_mock_key';
+
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        candidates: [
+          {
+            content: {
+              parts: [{ text: JSON.stringify({ executiveSummary: 'Missing directives' }) }],
+            },
+          },
+        ],
+      }),
+    } as Response);
+
+    const plan = await generateActionPlanWithAI(defaultParams);
+    expect(plan.engineSource).toBe(
+      'AerisPulse Deterministic Rules Engine (Zero-Downtime Fallback)'
+    );
+    expect(plan.directives).toHaveLength(4);
+  });
+
+  it('fails over when the model returns an empty candidate payload', async () => {
+    process.env.GEMINI_API_KEY = 'test_mock_key';
+
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ candidates: [] }),
+    } as Response);
+
+    const plan = await generateActionPlanWithAI(defaultParams);
+    expect(plan.directives).toHaveLength(4);
+  });
+
+  it('normalises Gemini SSE chunks into the client text envelope', async () => {
+    const encoder = new TextEncoder();
+    const geminiSse =
+      'data: {"candidates":[{"content":{"parts":[{"text":"Wear an "}]}}]}\n\n' +
+      'data: {"candidates":[{"content":{"parts":[{"text":"N95 mask."}]}}]}\n\n' +
+      'data: {"promptFeedback":{}}\n\n';
+
+    const splitAt = 45;
+    const source = new ReadableStream({
+      start(controller) {
+        controller.enqueue(encoder.encode(geminiSse.slice(0, splitAt)));
+        controller.enqueue(encoder.encode(geminiSse.slice(splitAt)));
+        controller.close();
+      },
+    });
+
+    const reader = normaliseGeminiStream(source).getReader();
+    let output = '';
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      output += new TextDecoder().decode(value);
+    }
+
+    expect(output).toContain('data: {"text":"Wear an "}');
+    expect(output).toContain('data: {"text":"N95 mask."}');
+    expect(output).toContain('[DONE]');
+  });
+
+  it('flushes a trailing partial event that arrives without a blank-line terminator', async () => {
+    const source = new ReadableStream({
+      start(controller) {
+        controller.enqueue(
+          new TextEncoder().encode(
+            'data: {"candidates":[{"content":{"parts":[{"text":"Tail"}]}}]}'
+          )
+        );
+        controller.close();
+      },
+    });
+
+    const reader = normaliseGeminiStream(source).getReader();
+    let output = '';
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      output += new TextDecoder().decode(value);
+    }
+
+    expect(output).toContain('data: {"text":"Tail"}');
   });
 
   it('fails over to deterministic stream when Gemini streaming throws error', async () => {

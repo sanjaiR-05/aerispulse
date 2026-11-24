@@ -121,7 +121,7 @@ export interface ActionPlanResponse {
   primaryPollutant: string;
   executiveSummary: string;
   engineSource:
-    | 'Google Gemini 2.0 / 1.5'
+    | 'Google Gemini (Live Model)'
     | 'AerisPulse Deterministic Rules Engine (Zero-Downtime Fallback)';
   generatedAt: string;
   directives: ActionPlanDirective[];

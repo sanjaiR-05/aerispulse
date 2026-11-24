@@ -10,6 +10,13 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     liveTelemetryTitle: 'Live Atmospheric Telemetry',
     telemetryConfidence: 'Telemetry Confidence',
     verified: 'VERIFIED',
+    baselineTelemetry: 'BASELINE',
+    executiveSynthesis: 'ACTION PLAN EXECUTIVE SYNTHESIS',
+    synthesizingResponse: 'Synthesizing response...',
+    chatGreeting:
+      'Hello! I am your AerisPulse real-time atmospheric health assistant. Ask me questions grounded strictly in current telemetry for your city.',
+    chatOfflineNotice:
+      'Live guidance is temporarily unavailable. Avoid outdoor exertion and keep indoor air filtered until the assistant reconnects.',
     airQualityStatus: 'AIR QUALITY STATUS (US EPA)',
     primaryPollutant: 'PRIMARY POLLUTANT',
     primaryDriver: 'Primary Driver of Air Quality Index',
@@ -67,6 +74,13 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     liveTelemetryTitle: 'நேரலை வளிமண்டல அளவீடுகள்',
     telemetryConfidence: 'அளவீட்டு நம்பகத்தன்மை',
     verified: 'சரிபார்க்கப்பட்டது',
+    baselineTelemetry: 'அடிப்படைத் தரவு',
+    executiveSynthesis: 'செயல் திட்ட நிர்வாகச் சுருக்கம்',
+    synthesizingResponse: 'பதில் உருவாக்கப்படுகிறது...',
+    chatGreeting:
+      'வணக்கம்! நான் உங்கள் AerisPulse நேரலை வளிமண்டல சுகாதார உதவியாளர். உங்கள் நகரத்தின் காற்றுத் தரம் குறித்து என்னிடம் கேளுங்கள்.',
+    chatOfflineNotice:
+      'நேரலை வழிகாட்டுதல் தற்காலிகமாக கிடைக்கவில்லை. உதவியாளர் மீண்டும் இணையும் வரை வெளியரங்க உடற்பயிற்சியைத் தவிர்த்து, உட்புறக் காற்றை சுத்திகரிக்கவும்.',
     airQualityStatus: 'காற்றுத் தர நிலை (US EPA)',
     primaryPollutant: 'முதன்மை மாசுபடுத்தி',
     primaryDriver: 'காற்றுத் தர குறியீட்டின் முதன்மைக் காரணி',
@@ -123,6 +137,13 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     liveTelemetryTitle: 'लाइव वायुमंडलीय टेलीमेट्री',
     telemetryConfidence: 'टेलीमेट्री विश्वसनीयता',
     verified: 'सत्यापित',
+    baselineTelemetry: 'आधारभूत डेटा',
+    executiveSynthesis: 'कार्य योजना कार्यकारी सारांश',
+    synthesizingResponse: 'प्रतिक्रिया तैयार की जा रही है...',
+    chatGreeting:
+      'नमस्ते! मैं आपका AerisPulse वास्तविक समय वायुमंडलीय स्वास्थ्य सहायक हूँ। अपने शहर के लाइव वायु आंकड़ों के बारे में मुझसे प्रश्न पूछें।',
+    chatOfflineNotice:
+      'लाइव मार्गदर्शन अस्थायी रूप से अनुपलब्ध है। सहायक के पुनः जुड़ने तक बाहरी व्यायाम से बचें और इनडोर हवा को फ़िल्टर रखें।',
     airQualityStatus: 'वायु गुणवत्ता स्थिति (US EPA)',
     primaryPollutant: 'प्राथमिक प्रदूषक',
     primaryDriver: 'वायु गुणवत्ता सूचकांक का मुख्य कारक',

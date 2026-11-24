@@ -70,8 +70,10 @@ $$\Delta E_{\text{CO}_2} = d_{\text{commute}} \times (EF_{\text{baseline}} - EF_
 Where $d_{\text{commute}}$ is the round-trip distance in kilometers ($\text{km}$), and $EF$ represents the greenhouse gas emission factor ($\text{kg CO}_2\text{e/passenger-km}$):
 - Baseline (Single-Occupancy ICE Car): $EF_{\text{ICE}} = 0.170\,\text{kg CO}_2/\text{km}$.
 - Two-Wheeler / Petrol Scooter: $EF_{\text{2W}} = 0.065\,\text{kg CO}_2/\text{km}$.
-- Electric Bus / Metro Rail (Grid-weighted Indian Average): $EF_{\text{transit}} = 0.028\,\text{kg CO}_2/\text{km}$.
+- Electric Bus / Metro Rail (calibrated electric rapid transit): $EF_{\text{transit}} = 0.006\,\text{kg CO}_2/\text{km}$.
 - Walking / Bicycle: $EF_{\text{active}} = 0.000\,\text{kg CO}_2/\text{km}$.
+
+These four intensities are declared exactly once in `src/domain/constants.ts` (`CARBON_EMISSION_FACTORS`) and consumed directly by `carbon-calculator.ts`, so the documented table and the computed output cannot diverge.
 
 ### Scientific Citation
 - **UK Department for Environment, Food & Rural Affairs (DEFRA):** *Government greenhouse gas conversion factors for company reporting.* 2023.
@@ -82,7 +84,7 @@ Where $d_{\text{commute}}$ is the round-trip distance in kilometers ($\text{km}$
 
 The estimated monthly outpatient medical and productivity savings ($\Delta S_{\text{INR}}$, in Indian Rupees per month) is derived from epidemiological concentration-response functions for urban Indian metropolitan zones:
 
-$$\Delta S_{\text{INR}} = \left( \frac{D_{\text{baseline}} - D_{\text{mitigated}}}{D_{\text{baseline}}} \right) \times \left( \frac{\min(AQI, 300)}{100} \right) \times S_{\text{base\_factor}}$$
+$$\Delta S_{\text{INR}} = \text{round}_{10}\left( \frac{D_{\text{baseline}} - D_{\text{mitigated}}}{D_{\text{baseline}}} \times S_{\text{base\_factor}} \right)$$
 
 Where:
 - $S_{\text{base\_factor}} = ₹2,200/\text{month}$, reflecting baseline average monthly per-capita outpatient medication, inhaler expenditure, and avoided lost productive days during severe pollution months in Indian Tier-1 cities.
@@ -95,10 +97,17 @@ Where:
 
 The Personal Health Shield Score ($S_{\text{shield}}$) computes an individual's overall physiological defense level based on their current environmental exposure and active mitigation controls:
 
-$$S_{\text{shield}} = \text{round}\left( 100 \times \left( 0.10 + 0.35 \times \eta_{\text{mask}} + 0.35 \times \eta_{\text{filter\_active}} + 0.20 \times (1 - f_{\text{cardio\_risk}}) \right) \times f_{\text{ambient}} \right)$$
+The model is additive: a baseline floor of 10 points is raised by each active mitigation and then clamped to $[0, 100]$:
 
-Where:
-- $f_{\text{cardio\_risk}}$ penalizes prolonged high-ventilation outdoor activity when ambient $AQI > 150$.
-- $f_{\text{ambient}} \in [0.4, 1.0]$ scales baseline defense according to atmospheric severity.
-- If no protective measures are taken in high AQI, the score collapses to $10 - 25/100$ (as demonstrated in the baseline state).
-- When a user enacts an N95 respirator, active indoor HEPA filtration, and sheltered transit, the score elevates to $95 - 100/100$.
+$$S_{\text{shield}} = \text{clamp}_{0,100}\left( 10 + w_{\text{mask}} + w_{\text{hepa}} + w_{\text{transit}} - p_{\text{cardio}} \right)$$
+
+Where (all declared in `SHIELD_WEIGHTS`, `src/domain/constants.ts`):
+- $w_{\text{mask}}$: N95/FFP2 $= 45$, surgical/cloth $= 20$, none $= 0$.
+- $w_{\text{hepa}}$: active True HEPA recirculation $= 40$, otherwise $0$.
+- $w_{\text{transit}}$: sealed metro / electric bus $= 3$, otherwise $0$.
+- $p_{\text{cardio}} = 5 \times t_{\text{cardio}}$ (hours), applied only when $AQI > 150$, cardio exceeds one hour, and no N95 is worn. The floor after penalty is 5 points.
+- Ambient floors: $AQI \le 50$ raises the score to at least 85; $AQI \le 100$ raises it to at least 65.
+
+Consequences:
+- If no protective measures are taken in high AQI, the score collapses to $10/100$ (as demonstrated in the baseline state).
+- When a user enacts an N95 respirator, active indoor HEPA filtration, and sheltered metro transit, the score rises to $98/100$; clean ambient air can lift it to $100/100$.

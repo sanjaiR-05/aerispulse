@@ -1,4 +1,4 @@
-import { MetroPreset } from './types';
+import { CommuteMode, MetroPreset } from './types';
 
 /**
  * Geographic metropolitan monitoring presets covering key Indian air basins.
@@ -43,6 +43,11 @@ export const METRO_PRESETS: MetroPreset[] = [
 ];
 
 /**
+ * Default metro preset used whenever an unknown city identifier is supplied.
+ */
+export const DEFAULT_METRO_PRESET_ID = 'delhi_ncr';
+
+/**
  * Human minute ventilation rates (m³/hr) across microenvironments per EPA Exposure Factors Handbook.
  */
 export const VENTILATION_RATES = {
@@ -71,13 +76,89 @@ export const HEPA_EFFICIENCY = {
 } as const;
 
 /**
- * Transport emission factors (kg CO2e / passenger-km) per DEFRA 2023.
+ * Average urban transit speeds (km/h) used to convert commute distance into exposure hours.
  */
-export const CARBON_EMISSION_FACTORS = {
-  ice_car: 0.17, // kg CO2e / km
-  two_wheeler: 0.065, // kg CO2e / km
-  metro_electric_bus: 0.028, // kg CO2e / km
-  bicycle_walk: 0.0, // kg CO2e / km
+export const TRANSIT_SPEED_KMH: Record<CommuteMode, number> = {
+  ice_car: 25,
+  two_wheeler: 25,
+  metro_electric_bus: 30,
+  bicycle_walk: 12,
+};
+
+/**
+ * Microenvironmental cabin attenuation applied to ambient PM2.5 during each transit mode.
+ */
+export const COMMUTE_CABIN_ATTENUATION: Record<CommuteMode, number> = {
+  ice_car: 0.15, // AC cabin provides ~15% particulate attenuation
+  two_wheeler: 0.0, // Open-air direct inhalation
+  metro_electric_bus: 0.35, // Sealed metro cabin with HVAC filters ~35%
+  bicycle_walk: 0.0, // Open-air
+};
+
+/**
+ * Transport emission factors (kg CO2e / passenger-km) aligned with DEFRA 2023 classes.
+ * This table is the single source of truth consumed by `carbon-calculator.ts`.
+ */
+export const CARBON_EMISSION_FACTORS: Record<CommuteMode, number> = {
+  ice_car: 0.17, // Single-occupancy ICE car baseline
+  two_wheeler: 0.065, // Petrol scooter / motorcycle
+  metro_electric_bus: 0.006, // Electric rapid transit with regenerative braking
+  bicycle_walk: 0.0, // Zero tailpipe emissions
+};
+
+/**
+ * Personal Health Shield Score weighting table (points, additive model).
+ */
+export const SHIELD_WEIGHTS = {
+  baseline: 10,
+  maskN95: 45,
+  maskSurgical: 20,
+  hepaActive: 40,
+  metroTransit: 3,
+  cardioPenaltyPerHour: 5,
+  cardioPenaltyFloor: 5,
+  goodAirFloor: 85,
+  goodAirBonus: 40,
+  moderateAirFloor: 65,
+  moderateAirBonus: 20,
+  scoreFloor: 0,
+  scoreCeiling: 100,
+} as const;
+
+/**
+ * Ambient AQI thresholds used by the Shield Score and severity classifications.
+ */
+export const SHIELD_THRESHOLDS = {
+  severeAqi: 150,
+  goodAqi: 50,
+  moderateAqi: 100,
+} as const;
+
+/**
+ * Sliding-window rate limiting policy shared by every API route handler.
+ */
+export const RATE_LIMIT = {
+  windowMs: 60_000,
+  maxRequests: 60,
+  maxTrackedIps: 10_000,
+} as const;
+
+
+/**
+ * Upstream I/O timeouts and cache lifetimes (milliseconds).
+ */
+export const TELEMETRY_CACHE_TTL_MS = 120_000;
+export const FALLBACK_CACHE_TTL_MS = 60_000;
+export const TELEMETRY_FETCH_TIMEOUT_MS = 5_000;
+export const GENAI_REQUEST_TIMEOUT_MS = 6_000;
+export const CHAT_STREAM_TIMEOUT_MS = 10_000;
+
+/**
+ * Stable public labels identifying which engine produced an action plan.
+ */
+export const ENGINE_SOURCE = {
+  gemini: 'Google Gemini (Live Model)',
+  deterministicFallback: 'AerisPulse Deterministic Rules Engine (Zero-Downtime Fallback)',
 } as const;
 
 /**

@@ -84,6 +84,45 @@ export const ChatRequestSchema = z.object({
 });
 
 /**
+ * Zod validation schema for a single AI-produced mitigation directive.
+ * Applied to every GenAI response before it reaches the client.
+ */
+export const ActionPlanDirectiveSchema = z.object({
+  category: z.enum(['indoor', 'commute', 'health', 'community']),
+  title: z.string().min(1).max(200),
+  urgency: z.enum(['CRITICAL', 'HIGH', 'MODERATE', 'LOW']),
+  description: z.string().min(1).max(1200),
+  impactMetricLabel: z.string().min(1).max(120),
+  impactMetricValue: z.string().min(1).max(240),
+});
+
+/**
+ * Zod validation schema for the structured JSON returned by the GenAI model.
+ * A response that fails this schema is rejected in favour of the deterministic engine.
+ */
+export const ActionPlanAiResponseSchema = z.object({
+  executiveSummary: z.string().min(1).max(1200),
+  directives: z.array(ActionPlanDirectiveSchema).min(1).max(8),
+});
+
+/**
+ * Zod validation schema for one Gemini streaming SSE chunk.
+ */
+export const GeminiStreamChunkSchema = z.object({
+  candidates: z
+    .array(
+      z.object({
+        content: z
+          .object({
+            parts: z.array(z.object({ text: z.string().optional() })).optional(),
+          })
+          .optional(),
+      })
+    )
+    .optional(),
+});
+
+/**
  * Zod validation schema for GET /api/telemetry query parameters.
  */
 export const TelemetryQuerySchema = z.object({

@@ -2,12 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ChatRequestSchema } from '@/domain/schemas';
 import { streamGroundedChat } from '@/services/genai-service';
 import { getAtmosphericTelemetry } from '@/services/telemetry-service';
-import { globalRateLimiter } from '@/services/rate-limiter';
-import {
-  getClientIp,
-  validateRequestOrigin,
-  createRateLimitHeaders,
-} from '@/services/security';
+import { guardApiRequest } from '@/services/api-guard';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,33 +12,13 @@ export const dynamic = 'force-dynamic';
  * Protected by sliding-window rate limiting, CSRF origin verification, and schema validation.
  */
 export async function POST(request: NextRequest): Promise<Response> {
-  // 1. CSRF Origin Validation
-  if (!validateRequestOrigin(request)) {
-    return NextResponse.json(
-      { error: 'Forbidden', message: 'Cross-origin request rejected' },
-      { status: 403 }
-    );
+  const guard = guardApiRequest(request, { enforceSameOrigin: true });
+  if (!guard.allowed) {
+    return guard.response;
   }
 
-  // 2. Sliding-Window Rate Limiter (60 req/min)
-  const ip = getClientIp(request);
-  const rateLimit = globalRateLimiter.check(ip);
-  const rateLimitHeaders = createRateLimitHeaders(60, rateLimit.remaining, rateLimit.resetTime);
+  const { rateLimitHeaders } = guard;
 
-  if (!rateLimit.allowed) {
-    return NextResponse.json(
-      {
-        error: 'Too Many Requests',
-        message: 'Rate limit exceeded. Please wait a moment before sending more messages.',
-      },
-      {
-        status: 429,
-        headers: rateLimitHeaders,
-      }
-    );
-  }
-
-  // 3. Request Body Parsing & Schema Validation
   try {
     const body = await request.json();
     const parseResult = ChatRequestSchema.safeParse(body);
@@ -61,7 +36,6 @@ export async function POST(request: NextRequest): Promise<Response> {
     const { message, cityId, cityName, language } = parseResult.data;
     const telemetry = await getAtmosphericTelemetry(cityId);
 
-    // 4. Grounded AI Streaming with Fallback
     const stream = await streamGroundedChat(
       message,
       cityName,
@@ -78,7 +52,7 @@ export async function POST(request: NextRequest): Promise<Response> {
         ...rateLimitHeaders,
       },
     });
-  } catch (_err) {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to stream chat response' },
       {

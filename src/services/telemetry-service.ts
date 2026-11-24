@@ -1,106 +1,51 @@
 import { AtmosphericTelemetry } from '../domain/types';
-import { METRO_PRESETS } from '../domain/constants';
-import { calculatePm25Aqi, calculateEuropeanCaqi } from './aqi-calculator';
+import {
+  DEFAULT_METRO_PRESET_ID,
+  FALLBACK_CACHE_TTL_MS,
+  METRO_PRESETS,
+  TELEMETRY_CACHE_TTL_MS,
+  TELEMETRY_FETCH_TIMEOUT_MS,
+} from '../domain/constants';
+import { calculateEuropeanCaqi, calculatePm25Aqi } from './aqi-calculator';
+import { buildFallbackTelemetry } from './fallback-telemetry';
 import { globalCache } from './cache-service';
 
 /**
- * Calibrated reference baseline telemetry across all four major Indian metropolitan corridors.
- * Guarantees zero-downtime offline resilience and immediate sub-15ms response latency.
+ * Live telemetry model attribution string.
  */
-export const CALIBRATED_FALLBACK_TELEMETRY: Record<string, AtmosphericTelemetry> = {
-  delhi_ncr: {
-    cityId: 'delhi_ncr',
-    cityName: 'Delhi NCR',
-    timestamp: new Date().toISOString(),
-    aqiUs: 204,
-    aqiCategory: 'Very Unhealthy',
-    primaryPollutant: 'PM2.5',
-    primaryPollutantConcentration: 96.6,
-    europeanCaqi: 83,
-    confidenceScore: 90,
-    isVerified: true,
-    modelSource: 'Open-Meteo CAMS Atmospheric Model (Active Multi-Station Synthesis)',
-    coordinates: { latitude: 28.61, longitude: 77.21 },
-    pollutants: {
-      pm25: 96.6,
-      pm10: 99.0,
-      no2: 27.7,
-      so2: 22.8,
-      o3: 62.0,
-      co: 880.0,
-    },
-  },
-  mumbai_coastal: {
-    cityId: 'mumbai_coastal',
-    cityName: 'Mumbai Coastal',
-    timestamp: new Date().toISOString(),
-    aqiUs: 142,
-    aqiCategory: 'Unhealthy for Sensitive Groups',
-    primaryPollutant: 'PM2.5',
-    primaryPollutantConcentration: 52.4,
-    europeanCaqi: 58,
-    confidenceScore: 92,
-    isVerified: true,
-    modelSource: 'Open-Meteo CAMS Atmospheric Model (Active Multi-Station Synthesis)',
-    coordinates: { latitude: 19.07, longitude: 72.87 },
-    pollutants: {
-      pm25: 52.4,
-      pm10: 78.0,
-      no2: 34.2,
-      so2: 14.5,
-      o3: 48.0,
-      co: 610.0,
-    },
-  },
-  bengaluru_corridor: {
-    cityId: 'bengaluru_corridor',
-    cityName: 'Bengaluru Corridor',
-    timestamp: new Date().toISOString(),
-    aqiUs: 78,
-    aqiCategory: 'Moderate',
-    primaryPollutant: 'PM2.5',
-    primaryPollutantConcentration: 24.8,
-    europeanCaqi: 36,
-    confidenceScore: 95,
-    isVerified: true,
-    modelSource: 'Open-Meteo CAMS Atmospheric Model (Active Multi-Station Synthesis)',
-    coordinates: { latitude: 12.97, longitude: 77.59 },
-    pollutants: {
-      pm25: 24.8,
-      pm10: 42.0,
-      no2: 18.1,
-      so2: 6.2,
-      o3: 38.0,
-      co: 390.0,
-    },
-  },
-  chennai_industrial: {
-    cityId: 'chennai_industrial',
-    cityName: 'Chennai Industrial',
-    timestamp: new Date().toISOString(),
-    aqiUs: 112,
-    aqiCategory: 'Unhealthy for Sensitive Groups',
-    primaryPollutant: 'PM2.5',
-    primaryPollutantConcentration: 39.5,
-    europeanCaqi: 45,
-    confidenceScore: 91,
-    isVerified: true,
-    modelSource: 'Open-Meteo CAMS Atmospheric Model (Active Multi-Station Synthesis)',
-    coordinates: { latitude: 13.08, longitude: 80.27 },
-    pollutants: {
-      pm25: 39.5,
-      pm10: 64.0,
-      no2: 22.4,
-      so2: 16.8,
-      o3: 44.0,
-      co: 520.0,
-    },
-  },
-};
+const LIVE_MODEL_SOURCE = 'Open-Meteo CAMS Atmospheric Model (Active Multi-Station Synthesis)';
+
+/**
+ * Default pollutant concentration used when an upstream field is absent.
+ */
+const POLLUTANT_FALLBACKS = {
+  pm25: 96.6,
+  pm10: 99.0,
+  no2: 27.7,
+  so2: 22.8,
+  co: 880.0,
+  o3: 62.0,
+} as const;
+
+/**
+ * Open-Meteo CAMS endpoint query parameters.
+ */
+const TELEMETRY_FIELDS = 'pm10,pm2_5,carbon_monoxide,nitrogen_dioxide,sulphur_dioxide,ozone,european_aqi,us_aqi';
+
+/**
+ * Reads a numeric field from the upstream payload, substituting the calibrated default.
+ *
+ * @param value - Raw upstream value
+ * @param fallback - Default concentration for that pollutant
+ * @returns {number} Numeric concentration
+ */
+function toConcentration(value: unknown, fallback: number): number {
+  return Number(value ?? fallback);
+}
 
 /**
  * Fetches real-time atmospheric telemetry from the European Copernicus Atmosphere Monitoring Service (CAMS)
- * via Open-Meteo API with sliding in-memory caching, sub-index derivation, and instant deterministic fallback.
+ * via Open-Meteo API with sliding in-memory caching and an internally consistent deterministic fallback.
  *
  * @param cityId - Identifier of the target metro preset (e.g. 'delhi_ncr', 'mumbai_coastal')
  * @returns {Promise<AtmosphericTelemetry>} Complete multi-pollutant telemetry object
@@ -118,12 +63,14 @@ export async function getAtmosphericTelemetry(cityId: string): Promise<Atmospher
     return cached.data;
   }
 
-  const preset = METRO_PRESETS.find((p) => p.id === cityId) ?? METRO_PRESETS[0]!;
+  const preset =
+    METRO_PRESETS.find((candidate) => candidate.id === cityId) ??
+    METRO_PRESETS.find((candidate) => candidate.id === DEFAULT_METRO_PRESET_ID)!;
 
   try {
-    const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${preset.latitude}&longitude=${preset.longitude}&current=pm10,pm2_5,carbon_monoxide,nitrogen_dioxide,sulphur_dioxide,ozone,european_aqi,us_aqi`;
+    const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${preset.latitude}&longitude=${preset.longitude}&current=${TELEMETRY_FIELDS}`;
     const res = await fetch(url, {
-      signal: AbortSignal.timeout(5000),
+      signal: AbortSignal.timeout(TELEMETRY_FETCH_TIMEOUT_MS),
       headers: { Accept: 'application/json' },
     });
 
@@ -134,28 +81,31 @@ export async function getAtmosphericTelemetry(cityId: string): Promise<Atmospher
     const json = await res.json();
     const current = json.current;
 
-    const pm25 = Number(current.pm2_5 ?? 96.6);
-    const pm10 = Number(current.pm10 ?? 99.0);
-    const no2 = Number(current.nitrogen_dioxide ?? 27.7);
-    const so2 = Number(current.sulphur_dioxide ?? 22.8);
-    const co = Number(current.carbon_monoxide ?? 880.0);
-    const o3 = Number(current.ozone ?? 62.0);
+    const pm25 = toConcentration(current.pm2_5, POLLUTANT_FALLBACKS.pm25);
+    const pm10 = toConcentration(current.pm10, POLLUTANT_FALLBACKS.pm10);
+    const no2 = toConcentration(current.nitrogen_dioxide, POLLUTANT_FALLBACKS.no2);
+    const so2 = toConcentration(current.sulphur_dioxide, POLLUTANT_FALLBACKS.so2);
+    const co = toConcentration(current.carbon_monoxide, POLLUTANT_FALLBACKS.co);
+    const o3 = toConcentration(current.ozone, POLLUTANT_FALLBACKS.o3);
 
     const aqiCalc = calculatePm25Aqi(pm25);
-    const caqi = calculateEuropeanCaqi(pm25, pm10, no2);
+    const upstreamAqi = Number(current.us_aqi);
+    const aqiUs = Number.isFinite(upstreamAqi)
+      ? Math.max(aqiCalc.aqi, Math.round(upstreamAqi))
+      : aqiCalc.aqi;
 
     const telemetry: AtmosphericTelemetry = {
       cityId: preset.id,
       cityName: preset.name,
       timestamp: new Date().toISOString(),
-      aqiUs: Math.max(aqiCalc.aqi, current.us_aqi ? Math.round(current.us_aqi) : aqiCalc.aqi),
+      aqiUs,
       aqiCategory: aqiCalc.category,
-      primaryPollutant: 'PM2.5',
+      primaryPollutant: aqiCalc.primaryPollutant,
       primaryPollutantConcentration: Math.round(pm25 * 10) / 10,
-      europeanCaqi: caqi,
+      europeanCaqi: calculateEuropeanCaqi(pm25, pm10, no2),
       confidenceScore: 90,
       isVerified: true,
-      modelSource: 'Open-Meteo CAMS Atmospheric Model (Active Multi-Station Synthesis)',
+      modelSource: LIVE_MODEL_SOURCE,
       coordinates: {
         latitude: preset.latitude,
         longitude: preset.longitude,
@@ -170,17 +120,12 @@ export async function getAtmosphericTelemetry(cityId: string): Promise<Atmospher
       },
     };
 
-    globalCache.set(cacheKey, telemetry, 120_000); // 2-minute cache
+    globalCache.set(cacheKey, telemetry, TELEMETRY_CACHE_TTL_MS);
     return telemetry;
-  } catch (_err) {
-    // If live call fails (offline, rate limit, timeout), return calibrated fallback
-    const fallback =
-      CALIBRATED_FALLBACK_TELEMETRY[cityId] ?? CALIBRATED_FALLBACK_TELEMETRY['delhi_ncr']!;
-    const synthesized: AtmosphericTelemetry = {
-      ...fallback,
-      timestamp: new Date().toISOString(),
-    };
-    globalCache.set(cacheKey, synthesized, 60_000);
-    return synthesized;
+  } catch {
+    // Upstream unavailable (offline, rate limited, timed out): serve the derived calibrated snapshot.
+    const fallback = buildFallbackTelemetry(preset.id);
+    globalCache.set(cacheKey, fallback, FALLBACK_CACHE_TTL_MS);
+    return fallback;
   }
 }

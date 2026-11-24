@@ -1,5 +1,11 @@
 import { SimulatorInputs } from '../domain/types';
-import { VENTILATION_RATES, MASK_EFFICIENCY, HEPA_EFFICIENCY } from '../domain/constants';
+import {
+  COMMUTE_CABIN_ATTENUATION,
+  HEPA_EFFICIENCY,
+  MASK_EFFICIENCY,
+  TRANSIT_SPEED_KMH,
+  VENTILATION_RATES,
+} from '../domain/constants';
 
 /**
  * Breakdown of particulate inhalation across daily microenvironments.
@@ -16,11 +22,36 @@ export interface DosageBreakdown {
 }
 
 /**
- * Calculates human daily inhaled particulate dosage (\( \mu\text{g/day} \)) across microenvironments
+ * Minute ventilation rates (m³/hr) applied to each commute modality.
+ */
+const COMMUTE_VENTILATION: Record<SimulatorInputs['commuteMode'], number> = {
+  ice_car: VENTILATION_RATES.carMetroCommute,
+  two_wheeler: VENTILATION_RATES.twoWheelerCommute,
+  metro_electric_bus: VENTILATION_RATES.carMetroCommute,
+  bicycle_walk: VENTILATION_RATES.activeCommute,
+};
+
+/**
+ * Hours in a day, expressed as a named constant for the exposure-time budget.
+ */
+const HOURS_PER_DAY = 24;
+
+/**
+ * Rounds a dosage value to one decimal place for stable presentation.
+ *
+ * @param value - Raw µg value
+ * @returns {number} Value rounded to 0.1 µg
+ */
+function roundDosage(value: number): number {
+  return Math.round(value * 10) / 10;
+}
+
+/**
+ * Calculates human daily inhaled particulate dosage (\\( \\mu\\text{g/day} \\)) across microenvironments
  * formulated in accordance with WHO Global Air Quality Guidelines (2021) and PNAS Global Exposure Mortality Model (GEMM 2018).
  *
  * Microenvironmental Inhalation Formula:
- * \( D = \sum_{j} \left( C_j \times V_{E,j} \times t_j \times (1 - \eta_{mask}) \times (1 - \eta_{filter}) \right) \)
+ * \\( D = \\sum_{j} \\left( C_j \\times V_{E,j} \\times t_j \\times (1 - \\eta_{mask}) \\times (1 - \\eta_{filter}) \\right) \\)
  *
  * @param pm25Concentration - Ambient PM2.5 mass concentration in µg/m³
  * @param inputs - User-defined lifestyle simulator behavioral parameters
@@ -41,73 +72,47 @@ export function calculateDailyInhaledDosage(
   pm25Concentration: number,
   inputs: SimulatorInputs
 ): DosageBreakdown {
-  // Transit average speeds in km/h to derive exposure hours
-  const transitSpeedKmH: Record<SimulatorInputs['commuteMode'], number> = {
-    ice_car: 25,
-    two_wheeler: 25,
-    metro_electric_bus: 30,
-    bicycle_walk: 12,
-  };
-
   const commuteHours =
     inputs.commuteDistanceKm > 0
-      ? inputs.commuteDistanceKm / transitSpeedKmH[inputs.commuteMode]
+      ? inputs.commuteDistanceKm / TRANSIT_SPEED_KMH[inputs.commuteMode]
       : 0;
 
-  const cardioHours = Math.max(0, Math.min(inputs.outdoorCardioHours, 24 - commuteHours));
-  const indoorHours = Math.max(0, 24 - commuteHours - cardioHours);
+  const cardioHours = Math.max(0, Math.min(inputs.outdoorCardioHours, HOURS_PER_DAY - commuteHours));
+  const indoorHours = Math.max(0, HOURS_PER_DAY - commuteHours - cardioHours);
 
-  // Mask filtration factor
-  const maskFiltration = MASK_EFFICIENCY[inputs.maskGrade];
-  const maskPenetration = 1 - maskFiltration;
-
-  // Commute ventilation rate
-  const commuteVentilation: Record<SimulatorInputs['commuteMode'], number> = {
-    ice_car: VENTILATION_RATES.carMetroCommute,
-    two_wheeler: VENTILATION_RATES.twoWheelerCommute,
-    metro_electric_bus: VENTILATION_RATES.carMetroCommute,
-    bicycle_walk: VENTILATION_RATES.activeCommute,
-  };
-
-  // Commute microenvironment attenuation (cabin / window protection)
-  const commuteCabinAttenuation: Record<SimulatorInputs['commuteMode'], number> = {
-    ice_car: 0.15, // AC cabin provides ~15% particulate attenuation
-    two_wheeler: 0.0, // Open-air direct inhalation
-    metro_electric_bus: 0.35, // Sealed metro cabin with HVAC filters ~35%
-    bicycle_walk: 0.0, // Open-air
-  };
+  // Mask filtration factor shared by outdoor microenvironments
+  const maskPenetration = 1 - MASK_EFFICIENCY[inputs.maskGrade];
 
   const commuteConcentration =
-    pm25Concentration * (1 - commuteCabinAttenuation[inputs.commuteMode]);
+    pm25Concentration * (1 - COMMUTE_CABIN_ATTENUATION[inputs.commuteMode]);
   const commuteInhaledUg =
     commuteConcentration *
-    commuteVentilation[inputs.commuteMode] *
+    COMMUTE_VENTILATION[inputs.commuteMode] *
     commuteHours *
     maskPenetration;
 
-  // Outdoor cardio ventilation
   const outdoorCardioInhaledUg =
     pm25Concentration *
     VENTILATION_RATES.highVentilationCardio *
     cardioHours *
     maskPenetration;
 
-  // Indoor concentration: Unfiltered infiltration (30% reduction) vs Active HEPA (85% reduction)
+  // Indoor concentration: unfiltered infiltration (30% reduction) vs active HEPA (85% reduction)
   const indoorAttenuation = inputs.indoorHepaActive
     ? HEPA_EFFICIENCY.hepaActive
     : HEPA_EFFICIENCY.unfilteredIndoorInfiltration;
 
-  const indoorConcentration = pm25Concentration * (1 - indoorAttenuation);
   const indoorInhaledUg =
-    indoorConcentration * VENTILATION_RATES.restingIndoor * indoorHours;
-
-  const totalInhaledUg = commuteInhaledUg + outdoorCardioInhaledUg + indoorInhaledUg;
+    pm25Concentration *
+    (1 - indoorAttenuation) *
+    VENTILATION_RATES.restingIndoor *
+    indoorHours;
 
   return {
-    commuteInhaledUg: Math.round(commuteInhaledUg * 10) / 10,
-    indoorInhaledUg: Math.round(indoorInhaledUg * 10) / 10,
-    outdoorCardioInhaledUg: Math.round(outdoorCardioInhaledUg * 10) / 10,
-    totalInhaledUg: Math.round(totalInhaledUg * 10) / 10,
+    commuteInhaledUg: roundDosage(commuteInhaledUg),
+    indoorInhaledUg: roundDosage(indoorInhaledUg),
+    outdoorCardioInhaledUg: roundDosage(outdoorCardioInhaledUg),
+    totalInhaledUg: roundDosage(commuteInhaledUg + outdoorCardioInhaledUg + indoorInhaledUg),
   };
 }
 

@@ -33,6 +33,8 @@ describe('API Route Handlers Integration Suite', () => {
     expect(json.cityId).toBe('delhi_ncr');
     expect(json.cityName).toBe('Delhi NCR');
     expect(json.aqiUs).toBeGreaterThan(0);
+    // Advertised quota must match the policy actually enforced by the shared limiter.
+    expect(res.headers.get('X-RateLimit-Limit')).toBe('60');
   });
 
   it('GET /api/telemetry returns 400 for invalid query parameter', async () => {

@@ -1,31 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAtmosphericTelemetry } from '@/services/telemetry-service';
 import { TelemetryQuerySchema } from '@/domain/schemas';
-import { globalRateLimiter } from '@/services/rate-limiter';
-import { getClientIp, createRateLimitHeaders } from '@/services/security';
+import { guardApiRequest } from '@/services/api-guard';
+import { DEFAULT_METRO_PRESET_ID } from '@/domain/constants';
 
 export const dynamic = 'force-dynamic';
 
 /**
  * GET /api/telemetry
  * Returns real-time multi-pollutant telemetry, AQI, European CAQI, and confidence metrics.
- * Multi-tier caching with S-MaxAge and stale-while-revalidate directives.
+ * Multi-tier caching with s-maxage and stale-while-revalidate directives.
  */
 export async function GET(request: NextRequest): Promise<NextResponse> {
-  const ip = getClientIp(request);
-  const rateLimit = globalRateLimiter.check(ip);
-  const rateLimitHeaders = createRateLimitHeaders(120, rateLimit.remaining, rateLimit.resetTime);
-
-  if (!rateLimit.allowed) {
-    return NextResponse.json(
-      { error: 'Too Many Requests', message: 'Rate limit exceeded.' },
-      { status: 429, headers: rateLimitHeaders }
-    );
+  const guard = guardApiRequest(request);
+  if (!guard.allowed) {
+    return guard.response;
   }
 
+  const { rateLimitHeaders } = guard;
+
   try {
-    const searchParams = request.nextUrl.searchParams;
-    const cityIdParam = searchParams.get('cityId') ?? 'delhi_ncr';
+    const cityIdParam = request.nextUrl.searchParams.get('cityId') ?? DEFAULT_METRO_PRESET_ID;
 
     const parseResult = TelemetryQuerySchema.safeParse({ cityId: cityIdParam });
     if (!parseResult.success) {
@@ -43,7 +38,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         ...rateLimitHeaders,
       },
     });
-  } catch (_err) {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to synthesize atmospheric telemetry' },
       { status: 500, headers: rateLimitHeaders }

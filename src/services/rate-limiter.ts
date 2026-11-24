@@ -1,3 +1,5 @@
+import { RATE_LIMIT } from '../domain/constants';
+
 /**
  * Internal tracking entry storing millisecond request timestamps for an IP.
  */
@@ -21,6 +23,9 @@ export interface RateLimitCheckResult {
  * Sliding-window in-memory IP rate limiter for API route protection against DoS / resource exhaustion.
  * Enforces strict per-IP request quotas within a sliding time window.
  *
+ * Records for IPs with no activity inside the current window are evicted once the tracking
+ * table exceeds {@link RATE_LIMIT.maxTrackedIps}, keeping memory bounded under traffic bursts.
+ *
  * @example
  * ```ts
  * const limiter = new SlidingWindowRateLimiter(60_000, 60);
@@ -29,8 +34,9 @@ export interface RateLimitCheckResult {
  * ```
  */
 export class SlidingWindowRateLimiter {
-  private windowMs: number;
-  private maxRequests: number;
+  private readonly windowMs: number;
+  private readonly maxRequests: number;
+  private readonly maxTrackedIps: number;
   private ipRecords = new Map<string, RateLimitEntry>();
 
   /**
@@ -38,10 +44,16 @@ export class SlidingWindowRateLimiter {
    *
    * @param windowMs - Sliding window duration in milliseconds (defaults to 60,000ms = 1 min)
    * @param maxRequests - Maximum requests permitted per window per IP (defaults to 60)
+   * @param maxTrackedIps - Maximum distinct IP records retained before pruning (defaults to 10,000)
    */
-  constructor(windowMs: number = 60_000, maxRequests: number = 60) {
+  constructor(
+    windowMs: number = RATE_LIMIT.windowMs,
+    maxRequests: number = RATE_LIMIT.maxRequests,
+    maxTrackedIps: number = RATE_LIMIT.maxTrackedIps
+  ) {
     this.windowMs = windowMs;
     this.maxRequests = maxRequests;
+    this.maxTrackedIps = maxTrackedIps;
   }
 
   /**
@@ -54,22 +66,22 @@ export class SlidingWindowRateLimiter {
     const now = Date.now();
     const windowStart = now - this.windowMs;
 
-    let record = this.ipRecords.get(ip);
-    if (!record) {
-      record = { timestamps: [] };
-      this.ipRecords.set(ip, record);
+    if (this.ipRecords.size >= this.maxTrackedIps) {
+      this.pruneExpired(windowStart);
     }
 
+    const record = this.ipRecords.get(ip) ?? { timestamps: [] };
+    this.ipRecords.set(ip, record);
+
     // Filter out timestamps outside the sliding window
-    record.timestamps = record.timestamps.filter((t) => t > windowStart);
+    record.timestamps = record.timestamps.filter((timestamp) => timestamp > windowStart);
 
     if (record.timestamps.length >= this.maxRequests) {
       const oldest = record.timestamps[0] ?? now;
-      const resetTime = oldest + this.windowMs;
       return {
         allowed: false,
         remaining: 0,
-        resetTime,
+        resetTime: oldest + this.windowMs,
       };
     }
 
@@ -79,6 +91,19 @@ export class SlidingWindowRateLimiter {
       remaining: this.maxRequests - record.timestamps.length,
       resetTime: now + this.windowMs,
     };
+  }
+
+  /**
+   * Drops every IP record whose requests have all aged out of the active window.
+   *
+   * @param windowStart - Epoch millisecond boundary of the active window
+   */
+  private pruneExpired(windowStart: number): void {
+    for (const [ip, record] of this.ipRecords) {
+      if (!record.timestamps.some((timestamp) => timestamp > windowStart)) {
+        this.ipRecords.delete(ip);
+      }
+    }
   }
 
   /**
@@ -92,4 +117,4 @@ export class SlidingWindowRateLimiter {
 /**
  * Shared global sliding-window rate limiter instance (60 requests / minute).
  */
-export const globalRateLimiter = new SlidingWindowRateLimiter(60_000, 60);
+export const globalRateLimiter = new SlidingWindowRateLimiter();

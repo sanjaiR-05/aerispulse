@@ -21,7 +21,8 @@ export interface UseThemeLanguageResult {
 
 /**
  * Custom hook managing UI accessibility theme (light/dark) and i18n localization state.
- * Synchronizes the Tailwind `dark` class dynamically on `document.documentElement`.
+ * Synchronizes the Tailwind `dark` class and the document `lang` attribute so assistive
+ * technologies always announce content in the correct language.
  *
  * @returns {UseThemeLanguageResult} Theme and language state controllers
  *
@@ -44,6 +45,13 @@ export function useThemeLanguage(): UseThemeLanguageResult {
       }
     }
   }, [isDark]);
+
+  // Keep the document language in sync with the active locale (WCAG 3.1.1 Language of Page).
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = language;
+    }
+  }, [language]);
 
   const toggleDark = useCallback(() => {
     setIsDark((prev) => !prev);

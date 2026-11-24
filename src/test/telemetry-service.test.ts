@@ -15,9 +15,19 @@ describe('Atmospheric Telemetry Service', () => {
     const telemetry = await getAtmosphericTelemetry('delhi_ncr');
     expect(telemetry.cityId).toBe('delhi_ncr');
     expect(telemetry.cityName).toBe('Delhi NCR');
-    expect(telemetry.aqiUs).toBe(204);
+    // 96.6 µg/m³ sits in the 55.5-125.4 EPA band, so the derived index is 180.
+    expect(telemetry.aqiUs).toBe(180);
+    expect(telemetry.aqiCategory).toBe('Unhealthy');
     expect(telemetry.pollutants.pm25).toBe(96.6);
-    expect(telemetry.isVerified).toBe(true);
+    expect(telemetry.europeanCaqi).toBe(88);
+    expect(telemetry.isVerified).toBe(false);
+  });
+
+  it('falls back to the default corridor for an unknown city identifier', async () => {
+    vi.spyOn(globalThis, 'fetch').mockRejectedValueOnce(new Error('Network error'));
+
+    const telemetry = await getAtmosphericTelemetry('atlantis_dome');
+    expect(telemetry.cityId).toBe('delhi_ncr');
   });
 
   it('fetches calibrated fallback telemetry for Mumbai Coastal', async () => {
@@ -79,5 +89,25 @@ describe('Atmospheric Telemetry Service', () => {
 
     expect(res1.cityId).toBe(res2.cityId);
     expect(fetchSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('derives the AQI locally when the upstream payload omits us_aqi', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        current: {
+          pm2_5: 45.2,
+          pm10: 80.0,
+          nitrogen_dioxide: 25.0,
+          sulphur_dioxide: 10.0,
+          carbon_monoxide: 500.0,
+          ozone: 40.0,
+        },
+      }),
+    } as Response);
+
+    const telemetry = await getAtmosphericTelemetry('delhi_ncr');
+    expect(telemetry.aqiUs).toBe(125);
+    expect(telemetry.isVerified).toBe(true);
   });
 });
