@@ -7,7 +7,7 @@
 [![Next.js](https://img.shields.io/badge/Next.js-15.1.0-black)](https://nextjs.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-> **Live Deployment:** [https://aerispulse.vercel.app](https://aerispulse.vercel.app)  
+> **Live Deployment:** [https://project-kappa-ten-61.vercel.app](https://project-kappa-ten-61.vercel.app)  
 > **Automated HD Walkthrough:** [Download 1080p Walkthrough](https://github.com/sanjaiR-05/aerispulse/releases/download/v1.0.0/aerispulse_walkthrough_1080p.mp4)
 
 ---

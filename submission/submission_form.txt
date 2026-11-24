@@ -13,7 +13,7 @@ Real-time atmospheric telemetry cross-referencing, peer-reviewed physiological d
 Urban Air Quality Assistant / Climate & Health Intelligence / GenAI Impact
 
 4. LIVE PRODUCTION APPLICATION URL:
-https://aerispulse.vercel.app
+https://project-kappa-ten-61.vercel.app
 
 5. PUBLIC GITHUB REPOSITORY URL:
 https://github.com/sanjaiR-05/aerispulse
