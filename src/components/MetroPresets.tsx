@@ -6,17 +6,30 @@ import { METRO_PRESETS } from '@/domain/constants';
 import { MetroPreset, SupportedLanguage } from '@/domain/types';
 import { TRANSLATIONS } from '@/domain/translations';
 
-interface MetroPresetsProps {
+/**
+ * Properties for the MetroPresets selector component.
+ */
+export interface MetroPresetsProps {
+  /** Currently active metro preset */
   selectedPreset: MetroPreset;
+  /** Selection callback handler */
   onSelectPreset: (preset: MetroPreset) => void;
+  /** Active internationalization locale */
   language: SupportedLanguage;
 }
 
+/**
+ * Geographic corridor selection cards enabling instant 1-click evaluation of major Indian urban air basins:
+ * Delhi NCR (Continental Inversion), Mumbai (Maritime Aerosol), Bengaluru (Plateau), Chennai (Thermal Coastal).
+ *
+ * @param props - MetroPresetsProps configuration
+ * @returns {JSX.Element} Rendered metro presets button grid
+ */
 export const MetroPresets: React.FC<MetroPresetsProps> = ({
   selectedPreset,
   onSelectPreset,
   language,
-}) => {
+}): React.JSX.Element => {
   const t = TRANSLATIONS[language];
 
   return (
@@ -54,11 +67,11 @@ export const MetroPresets: React.FC<MetroPresetsProps> = ({
                 <span className="font-semibold text-sm text-slate-900 dark:text-white">
                   {preset.name}
                 </span>
-                <span className="text-[11px] font-medium px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
                   {preset.state}
                 </span>
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
                 {preset.typology}
               </p>
             </button>

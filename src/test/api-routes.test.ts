@@ -219,6 +219,47 @@ describe('API Route Handlers Integration Suite', () => {
     expect(res.status).toBe(500);
   });
 
+  it('GET /api/telemetry enforces rate limits (429)', async () => {
+    const testIp = '10.0.0.55';
+    for (let i = 0; i < 120; i++) {
+      globalRateLimiter.check(testIp);
+    }
+
+    const req = new NextRequest('http://localhost:3000/api/telemetry?cityId=delhi_ncr', {
+      headers: { 'x-forwarded-for': testIp },
+    });
+    const res = await telemetryHandler(req);
+    expect(res.status).toBe(429);
+  });
+
+  it('POST /api/action-plan rejects cross-origin foreign requests with 403', async () => {
+    const req = new NextRequest('http://localhost:3000/api/action-plan', {
+      method: 'POST',
+      headers: {
+        origin: 'https://malicious-cross-origin.com',
+        host: 'localhost:3000',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({}),
+    });
+    const res = await actionPlanHandler(req);
+    expect(res.status).toBe(403);
+  });
+
+  it('POST /api/chat rejects cross-origin foreign requests with 403', async () => {
+    const req = new NextRequest('http://localhost:3000/api/chat', {
+      method: 'POST',
+      headers: {
+        origin: 'https://malicious-cross-origin.com',
+        host: 'localhost:3000',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({}),
+    });
+    const res = await chatHandler(req);
+    expect(res.status).toBe(403);
+  });
+
   it('POST /api/chat handles internal errors gracefully with 500', async () => {
     const req = new NextRequest('http://localhost:3000/api/chat', {
       method: 'POST',

@@ -5,16 +5,34 @@ import { Activity, CheckCircle, ShieldCheck } from 'lucide-react';
 import { AtmosphericTelemetry, SupportedLanguage } from '@/domain/types';
 import { TRANSLATIONS } from '@/domain/translations';
 
-interface TelemetryCardsProps {
+/**
+ * Properties for the TelemetryCards display component.
+ */
+export interface TelemetryCardsProps {
+  /** Active multi-pollutant telemetry dataset */
   telemetry: AtmosphericTelemetry;
+  /** Active internationalization locale */
   language: SupportedLanguage;
 }
 
-export const TelemetryCards: React.FC<TelemetryCardsProps> = ({ telemetry, language }) => {
+/**
+ * Primary atmospheric telemetry grid displaying 4 key analytical cards:
+ * 1. US EPA AQI status gauge and category classification
+ * 2. Primary driving pollutant identity and particulate mass concentration
+ * 3. European CAQI benchmark (0-100)
+ * 4. Ground-truth Copernicus Atmosphere Monitoring Service (CAMS) cross-reference verification
+ *
+ * @param props - TelemetryCardsProps configuration
+ * @returns {JSX.Element} Rendered telemetry cards grid
+ */
+export const TelemetryCards: React.FC<TelemetryCardsProps> = ({
+  telemetry,
+  language,
+}): React.JSX.Element => {
   const t = TRANSLATIONS[language];
 
   // EPA category styling
-  const getCategoryColor = (category: string) => {
+  const getCategoryColor = (category: string): string => {
     switch (category) {
       case 'Good':
         return 'text-emerald-700 bg-emerald-50 border-emerald-300 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-700';

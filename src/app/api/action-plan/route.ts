@@ -2,17 +2,33 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ActionPlanRequestSchema } from '@/domain/schemas';
 import { generateActionPlanWithAI } from '@/services/genai-service';
 import { globalRateLimiter } from '@/services/rate-limiter';
+import {
+  getClientIp,
+  validateRequestOrigin,
+  createRateLimitHeaders,
+} from '@/services/security';
 
 export const dynamic = 'force-dynamic';
 
-export async function POST(request: NextRequest) {
-  // Security: In-memory sliding-window IP rate limiter
-  const ip =
-    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-    request.headers.get('x-real-ip') ||
-    '127.0.0.1';
+/**
+ * POST /api/action-plan
+ * Synthesizes personalized air quality action directives via GenAI with zero-downtime deterministic fallback.
+ * Protected by sliding-window rate limiting, CSRF origin verification, and schema validation.
+ */
+export async function POST(request: NextRequest): Promise<NextResponse> {
+  // 1. CSRF Origin Validation
+  if (!validateRequestOrigin(request)) {
+    return NextResponse.json(
+      { error: 'Forbidden', message: 'Cross-origin request rejected' },
+      { status: 403 }
+    );
+  }
 
+  // 2. Sliding-Window Rate Limiter (60 req/min)
+  const ip = getClientIp(request);
   const rateLimit = globalRateLimiter.check(ip);
+  const rateLimitHeaders = createRateLimitHeaders(60, rateLimit.remaining, rateLimit.resetTime);
+
   if (!rateLimit.allowed) {
     return NextResponse.json(
       {
@@ -22,13 +38,12 @@ export async function POST(request: NextRequest) {
       },
       {
         status: 429,
-        headers: {
-          'Retry-After': Math.ceil((rateLimit.resetTime - Date.now()) / 1000).toString(),
-        },
+        headers: rateLimitHeaders,
       }
     );
   }
 
+  // 3. Request Body Parsing & Schema Validation
   try {
     const body = await request.json();
     const parseResult = ActionPlanRequestSchema.safeParse(body);
@@ -39,12 +54,16 @@ export async function POST(request: NextRequest) {
           error: 'Invalid Request Payload',
           details: parseResult.error.flatten(),
         },
-        { status: 400 }
+        {
+          status: 400,
+          headers: rateLimitHeaders,
+        }
       );
     }
 
     const { cityId, cityName, language, simulatorInputs, telemetry } = parseResult.data;
 
+    // 4. Synthesis via AI / Deterministic Engine
     const actionPlan = await generateActionPlanWithAI({
       cityId,
       cityName,
@@ -56,11 +75,17 @@ export async function POST(request: NextRequest) {
       simulatorInputs,
     });
 
-    return NextResponse.json(actionPlan);
+    return NextResponse.json(actionPlan, {
+      status: 200,
+      headers: rateLimitHeaders,
+    });
   } catch (_err) {
     return NextResponse.json(
       { error: 'Internal Server Error during action plan synthesis' },
-      { status: 500 }
+      {
+        status: 500,
+        headers: rateLimitHeaders,
+      }
     );
   }
 }

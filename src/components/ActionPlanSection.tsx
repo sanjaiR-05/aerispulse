@@ -5,19 +5,34 @@ import { Sparkles, Cpu, Home, Bike, HeartPulse, Users } from 'lucide-react';
 import { ActionPlanDirective, ActionPlanResponse, SupportedLanguage } from '@/domain/types';
 import { TRANSLATIONS } from '@/domain/translations';
 
-interface ActionPlanSectionProps {
+/**
+ * Properties for the ActionPlanSection component.
+ */
+export interface ActionPlanSectionProps {
+  /** Active synthesized action plan response, or null before generation */
   actionPlan: ActionPlanResponse | null;
+  /** Whether synthesis is actively in flight */
   isLoading: boolean;
+  /** Trigger callback to execute action plan synthesis */
   onGeneratePlan: () => void;
+  /** Active internationalization locale */
   language: SupportedLanguage;
 }
 
+/**
+ * GenAI Action Engine section presenting structured tactical mitigation directives:
+ * Indoor protection, Commute transit, Pulmonary health, and Community reporting.
+ * Features zero-downtime deterministic fallback and instant local rendering.
+ *
+ * @param props - ActionPlanSectionProps configuration
+ * @returns {JSX.Element} Rendered action plan panel
+ */
 export const ActionPlanSection: React.FC<ActionPlanSectionProps> = ({
   actionPlan,
   isLoading,
   onGeneratePlan,
   language,
-}) => {
+}): React.JSX.Element => {
   const t = TRANSLATIONS[language];
 
   const getUrgencyBadge = (urgency: ActionPlanDirective['urgency']) => {

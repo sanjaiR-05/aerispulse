@@ -5,11 +5,22 @@ import { ShieldCheck, BookOpen, Shield } from 'lucide-react';
 import { SupportedLanguage } from '@/domain/types';
 import { TRANSLATIONS } from '@/domain/translations';
 
-interface FooterProps {
+/**
+ * Properties for the Footer component.
+ */
+export interface FooterProps {
+  /** Active internationalization locale */
   language: SupportedLanguage;
 }
 
-export const Footer: React.FC<FooterProps> = ({ language }) => {
+/**
+ * System footer presenting peer-reviewed epidemiological citations (WHO AQG 2021, EPA 454/B-18-007,
+ * GEMM PNAS 2018), link to clinical methodology documentation, and WCAG 2.1 AA accessibility verification badge.
+ *
+ * @param props - FooterProps configuration
+ * @returns {JSX.Element} Rendered footer element
+ */
+export const Footer: React.FC<FooterProps> = ({ language }): React.JSX.Element => {
   const t = TRANSLATIONS[language];
 
   return (

@@ -5,12 +5,28 @@ import { Bot, Send, Sparkles } from 'lucide-react';
 import { AtmosphericTelemetry, ChatMessage, SupportedLanguage } from '@/domain/types';
 import { TRANSLATIONS } from '@/domain/translations';
 
-interface StreamingChatProps {
+/**
+ * Properties for the StreamingChat component.
+ */
+export interface StreamingChatProps {
+  /** Active multi-pollutant atmospheric telemetry dataset */
   telemetry: AtmosphericTelemetry;
+  /** Active internationalization locale */
   language: SupportedLanguage;
 }
 
-export const StreamingChat: React.FC<StreamingChatProps> = ({ telemetry, language }) => {
+/**
+ * Grounded Real-Time Atmospheric Chat Assistant component.
+ * Streams conversational responses via Server-Sent Events (SSE) grounded in live atmospheric conditions.
+ * Implements XML boundary fence prompt isolation to resist jailbreaks and injection attacks.
+ *
+ * @param props - StreamingChatProps configuration
+ * @returns {JSX.Element} Rendered streaming conversational interface
+ */
+export const StreamingChat: React.FC<StreamingChatProps> = ({
+  telemetry,
+  language,
+}): React.JSX.Element => {
   const t = TRANSLATIONS[language];
   const [messages, setMessages] = useState<ChatMessage[]>([
     {

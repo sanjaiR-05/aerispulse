@@ -1,9 +1,25 @@
+/**
+ * Supported internationalization locale codes.
+ */
 export type SupportedLanguage = 'en' | 'ta' | 'hi';
 
-export type CommuteMode = 'ice_car' | 'two_wheeler' | 'metro_electric_bus' | 'bicycle_walk';
+/**
+ * Supported urban transit modalities.
+ */
+export type CommuteMode =
+  | 'ice_car'
+  | 'two_wheeler'
+  | 'metro_electric_bus'
+  | 'bicycle_walk';
 
+/**
+ * Respiratory mask certification grades.
+ */
 export type MaskGrade = 'none' | 'surgical_cloth' | 'n95_ffp2';
 
+/**
+ * Metropolitan geographical monitoring preset configuration.
+ */
 export interface MetroPreset {
   id: string;
   name: string;
@@ -14,12 +30,21 @@ export interface MetroPreset {
   typology: string;
 }
 
+/**
+ * Normalized multi-pollutant atmospheric telemetry schema.
+ */
 export interface AtmosphericTelemetry {
   cityId: string;
   cityName: string;
   timestamp: string;
   aqiUs: number;
-  aqiCategory: 'Good' | 'Moderate' | 'Unhealthy for Sensitive Groups' | 'Unhealthy' | 'Very Unhealthy' | 'Hazardous';
+  aqiCategory:
+    | 'Good'
+    | 'Moderate'
+    | 'Unhealthy for Sensitive Groups'
+    | 'Unhealthy'
+    | 'Very Unhealthy'
+    | 'Hazardous';
   primaryPollutant: 'PM2.5' | 'PM10' | 'NO2' | 'SO2' | 'CO' | 'O3';
   primaryPollutantConcentration: number;
   europeanCaqi: number;
@@ -40,23 +65,43 @@ export interface AtmosphericTelemetry {
   };
 }
 
+/**
+ * User inputs governing the What-If Lifestyle Simulator.
+ */
 export interface SimulatorInputs {
+  /** Mode of commute transit */
   commuteMode: CommuteMode;
+  /** Commute transit distance traveled per day in kilometers */
   commuteDistanceKm: number;
+  /** Respiratory mask grade worn during commute */
   maskGrade: MaskGrade;
+  /** Whether indoor true HEPA air filtration is active */
   indoorHepaActive: boolean;
+  /** Hours spent outdoors in high-ventilation cardio / physical exertion */
   outdoorCardioHours: number;
 }
 
+/**
+ * Deterministic mathematical outputs derived by the lifestyle simulator.
+ */
 export interface SimulatorOutputs {
-  dailyInhaledPm25Dosage: number; // ug/day
-  baselineDosage: number; // ug/day
-  dosageReductionPercentage: number; // %
-  dailyCarbonAbatedKg: number; // kg CO2/day
-  monthlyHealthSavingsInr: number; // INR/month
-  personalHealthShieldScore: number; // 0-100
+  /** Inhaled PM2.5 dosage in µg/day */
+  dailyInhaledPm25Dosage: number;
+  /** Unmitigated baseline dosage in µg/day */
+  baselineDosage: number;
+  /** Percentage reduction in particulate inhalation relative to baseline */
+  dosageReductionPercentage: number;
+  /** Carbon emissions abated per day in kg CO2e */
+  dailyCarbonAbatedKg: number;
+  /** Estimated monthly health economic expenditure savings in INR ₹ */
+  monthlyHealthSavingsInr: number;
+  /** Composite individual defense shield index score [0-100] */
+  personalHealthShieldScore: number;
 }
 
+/**
+ * Tactical mitigation action directive produced by GenAI or rules engine.
+ */
 export interface ActionPlanDirective {
   category: 'indoor' | 'commute' | 'health' | 'community';
   title: string;
@@ -66,17 +111,25 @@ export interface ActionPlanDirective {
   impactMetricValue: string;
 }
 
+/**
+ * Standardized response envelope for personalized clinical action plans.
+ */
 export interface ActionPlanResponse {
   cityId: string;
   cityName: string;
   compositeAqi: number;
   primaryPollutant: string;
   executiveSummary: string;
-  engineSource: 'Google Gemini 2.0 / 1.5' | 'AerisPulse Deterministic Rules Engine (Zero-Downtime Fallback)';
+  engineSource:
+    | 'Google Gemini 2.0 / 1.5'
+    | 'AerisPulse Deterministic Rules Engine (Zero-Downtime Fallback)';
   generatedAt: string;
   directives: ActionPlanDirective[];
 }
 
+/**
+ * Chat message model for streaming assistant conversation.
+ */
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant' | 'system';

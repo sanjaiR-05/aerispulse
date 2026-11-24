@@ -1,6 +1,9 @@
 import { ActionPlanDirective, ActionPlanResponse, SupportedLanguage, SimulatorInputs } from '../domain/types';
 
-interface FallbackParams {
+/**
+ * Parameter interface for deterministic action plan synthesis.
+ */
+export interface FallbackActionPlanParams {
   cityId: string;
   cityName: string;
   language: SupportedLanguage;
@@ -12,10 +15,26 @@ interface FallbackParams {
 
 /**
  * Deterministic Rules-Based Fallback Engine.
- * Formulates structured clinical mitigation plans and chat responses
- * with 100% zero-downtime resilience when upstream LLMs are unavailable.
+ * Formulates structured clinical mitigation plans and directives with 100% zero-downtime resilience
+ * when upstream GenAI LLMs are unconfigured, rate-limited, or experiencing latency timeouts.
+ *
+ * @param params - Ambient telemetry, selected city, language, and user simulator parameters
+ * @returns {ActionPlanResponse} Fully structured clinical action plan with four categorized directives
+ *
+ * @example
+ * ```ts
+ * const plan = generateFallbackActionPlan({
+ *   cityId: 'delhi_ncr',
+ *   cityName: 'Delhi NCR',
+ *   language: 'en',
+ *   aqiUs: 204,
+ *   primaryPollutant: 'PM2.5',
+ *   primaryPollutantConcentration: 96.6,
+ *   inputs: DEFAULT_SIMULATOR_INPUTS,
+ * });
+ * ```
  */
-export function generateFallbackActionPlan(params: FallbackParams): ActionPlanResponse {
+export function generateFallbackActionPlan(params: FallbackActionPlanParams): ActionPlanResponse {
   const { cityName, language, aqiUs, primaryPollutant, primaryPollutantConcentration } = params;
 
   const isSevere = aqiUs > 200;
@@ -62,7 +81,7 @@ export function generateFallbackActionPlan(params: FallbackParams): ActionPlanRe
       cityName,
       compositeAqi: aqiUs,
       primaryPollutant,
-      executiveSummary: `${cityName}-க்கான வானிலை ஆலோசனை: தற்போதைய கூட்டு AQI ${aqiUs} (${primaryPollutant}: ${primaryPollutantConcentration} µg/m³). முன் எச்சரிக்கை நடவடிக்கைகள் பரிந்துரைக்கப்படுகின்றன.`,
+      executiveSummary: `${cityName} வானிலை ஆலோசனை: தற்போதைய காற்றுத் தரம் ${aqiUs} AQI (${primaryPollutant} செறிவு: ${primaryPollutantConcentration} µg/m³). சுகாதாரப் பாதுகாப்பு நெறிமுறைகளைப் பின்பற்றவும்.`,
       engineSource: 'AerisPulse Deterministic Rules Engine (Zero-Downtime Fallback)',
       generatedAt: new Date().toISOString(),
       directives,
@@ -73,35 +92,35 @@ export function generateFallbackActionPlan(params: FallbackParams): ActionPlanRe
     const directives: ActionPlanDirective[] = [
       {
         category: 'indoor',
-        title: 'ट्रू HEPA इनडोर वायु पुनर्चक्रण सक्रिय करें',
+        title: 'सक्रिय HEPA वायु शोधन संचालित करें',
         urgency: isSevere ? 'CRITICAL' : 'HIGH',
-        description: `परिवेश AQI (${aqiUs}) गंभीर है। खिड़कियां बंद रखें और HEPA एयर प्यूरीफायर को अधिकतम पुनर्चक्रण मोड पर चलाएं।`,
-        impactMetricLabel: 'प्रभाव सूचकांक',
-        impactMetricValue: '85% इनडोर PM2.5 जमाव में कमी',
+        description: `परिवेश AQI (${aqiUs}) अत्यधिक उच्च स्तर पर है। खिड़कियां सील रखें एवं ट्रू HEPA प्यूरीफायर को रीसर्क्युलेशन मोड पर चालू रखें।`,
+        impactMetricLabel: 'प्रभाव मीट्रिक:',
+        impactMetricValue: '85% इनडोर PM2.5 अवसादन में कमी',
       },
       {
         category: 'commute',
-        title: 'अनिवार्य N95 मास्क एवं सुरक्षित सार्वजनिक पारगमन',
+        title: 'N95 श्वसन सुरक्षा एवं सार्वजनिक मेट्रो पारगमन',
         urgency: isSevere ? 'CRITICAL' : isModerate ? 'HIGH' : 'MODERATE',
-        description: 'दोपहिया और खुली यात्रा से बचें। कसकर लगे N95/FFP2 मास्क के साथ वातानुकूलित मेट्रो रेल का उपयोग करें।',
-        impactMetricLabel: 'प्रभाव सूचकांक',
-        impactMetricValue: '95% यात्रा अंतःश्वसन जोखिम में कमी',
+        description: 'खुले दोपहिया वाहनों से बचें। N95/FFP2 रेस्पिरेटर मास्क के साथ वातानुकूलित मेट्रो अथवा इलेक्ट्रिक बस चुनें।',
+        impactMetricLabel: 'प्रभाव मीट्रिक:',
+        impactMetricValue: '95% कम पारगमन इनहेलेशन एक्सपोजर',
       },
       {
         category: 'health',
-        title: 'बाहरी उच्च-तीव्रता कार्डियो स्थगित करें',
+        title: 'बाहरी एरोबिक व्यायाम स्थगित करें',
         urgency: isSevere ? 'HIGH' : 'MODERATE',
-        description: `प्राथमिक प्रदूषक सांद्रता ${primaryPollutantConcentration} µg/m³ है। फेफड़ों की सुरक्षा हेतु इनडोर व्यायाम करें।`,
-        impactMetricLabel: 'प्रभाव सूचकांक',
-        impactMetricValue: '60% फुफ्फुसीय तनाव में कमी',
+        description: `वर्तमान कण सांद्रता ${primaryPollutantConcentration} µg/m³ है। पल्मोनरी तनाव से बचाव हेतु इनडोर व्यायामशाला चुनें।`,
+        impactMetricLabel: 'प्रभाव मीट्रिक:',
+        impactMetricValue: '60% कम श्वसन तनाव',
       },
       {
         category: 'community',
-        title: 'खुले में कचरा जलाने की सूचना दें',
+        title: 'खुले कचरे अथवा बायोमास दहन की सूचना दें',
         urgency: 'HIGH',
-        description: 'किसी भी बायोमास या निर्माण धूल उल्लंघन की रिपोर्ट नगर निगम हेल्पलाइन पर दर्ज करें।',
-        impactMetricLabel: 'प्रभाव सूचकांक',
-        impactMetricValue: 'स्थानीय वायु सुरक्षा',
+        description: 'स्थानीय धुआं एवं निर्माण धूल उल्लंघन को नगरपालिका पोर्टल पर पंजीकृत करें।',
+        impactMetricLabel: 'प्रभाव मीट्रिक:',
+        impactMetricValue: 'सामुदायिक वायु मंडल संरक्षण',
       },
     ];
 
@@ -110,42 +129,42 @@ export function generateFallbackActionPlan(params: FallbackParams): ActionPlanRe
       cityName,
       compositeAqi: aqiUs,
       primaryPollutant,
-      executiveSummary: `${cityName} के लिए मौसम संबंधी परामर्श: वर्तमान समग्र सूचकांक ${aqiUs} AQI है (${primaryPollutant}: ${primaryPollutantConcentration} µg/m³)। एहतियाती सुरक्षा उपायों की सिफारिश की जाती है।`,
+      executiveSummary: `${cityName} मौसम परामर्श: वर्तमान समग्र सूचकांक ${aqiUs} AQI है, जिसमें मुख्य प्रदूषक ${primaryPollutant} (${primaryPollutantConcentration} µg/m³) है। तत्काल एहतियाती उपाय अपनाने की सलाह दी जाती है।`,
       engineSource: 'AerisPulse Deterministic Rules Engine (Zero-Downtime Fallback)',
       generatedAt: new Date().toISOString(),
       directives,
     };
   }
 
-  // Default: English
+  // English (default)
   const directives: ActionPlanDirective[] = [
     {
       category: 'indoor',
       title: 'Enact True HEPA Indoor Recirculation',
       urgency: isSevere ? 'CRITICAL' : 'HIGH',
-      description: `Ambient AQI (${aqiUs}) is hazardous. Seal building envelope windows and set HEPA air purifiers to maximum continuous recirculation mode.`,
+      description: `Ambient AQI (${aqiUs}) indicates severe atmospheric stagnation. Seal fenestration and maintain active True HEPA air purifiers in sealed recirculation mode to scrub particulate deposition.`,
       impactMetricLabel: 'Impact Metric:',
       impactMetricValue: '85% Indoor PM2.5 Deposition Reduction',
     },
     {
       category: 'commute',
-      title: 'Mandatory N95 Respirator & Sealed Transit',
+      title: 'Mandate N95 Respiratory Protection for Transit',
       urgency: isSevere ? 'CRITICAL' : isModerate ? 'HIGH' : 'MODERATE',
-      description: 'Bypass two-wheeler and open rickshaw transit. Utilize sealed metro rail with tightly fitted N95/FFP2 respirators.',
+      description: 'Avoid open-air two-wheeler and auto-rickshaw transit. Transition to sealed Metro Rail cars and ensure tight-seal N95/FFP2 facial respiratory barrier.',
       impactMetricLabel: 'Impact Metric:',
-      impactMetricValue: '95% Commute Inhaled Dose Abatement',
+      impactMetricValue: '95% Commute Inhalation Exposure Abatement',
     },
     {
       category: 'health',
-      title: 'Postpone High-Ventilation Outdoor Cardio',
+      title: 'Defer High-Ventilation Outdoor Aerobic Cardio',
       urgency: isSevere ? 'HIGH' : 'MODERATE',
-      description: `Primary pollutant concentration is ${primaryPollutantConcentration} µg/m³. Shift cardio to filtered indoor environments to prevent deep alveolar deposition.`,
+      description: `Ambient fine particulate concentration stands at ${primaryPollutantConcentration} µg/m³. Elevated ventilation (>3.0 m³/hr) accelerates alveolar microvascular penetration. Substitute with indoor resistance training.`,
       impactMetricLabel: 'Impact Metric:',
-      impactMetricValue: '60% Pulmonary Stress Reduction',
+      impactMetricValue: '60% Pulmonary Microvascular Stress Reduction',
     },
     {
       category: 'community',
-      title: 'Report Open Waste Combustion',
+      title: 'Report Localized Biomass & Stubble Open Incineration',
       urgency: 'HIGH',
       description: 'Log any localized biomass, leaf, or construction dust violations on municipal portal hotlines.',
       impactMetricLabel: 'Impact Metric:',
@@ -167,6 +186,19 @@ export function generateFallbackActionPlan(params: FallbackParams): ActionPlanRe
 
 /**
  * Deterministic fallback responses for grounded atmospheric chat queries.
+ * Synthesizes localized, evidence-based clinical and meteorological answers across English, Tamil, and Hindi.
+ *
+ * @param query - Inbound user query text
+ * @param cityName - Active metropolitan area name
+ * @param aqiUs - Active US EPA Air Quality Index value
+ * @param pm25 - Active PM2.5 particulate concentration in µg/m³
+ * @param language - Active interface locale ('en' | 'ta' | 'hi')
+ * @returns {string} Grounded response text
+ *
+ * @example
+ * ```ts
+ * const reply = generateFallbackChatResponse('Is it safe to jog?', 'Delhi NCR', 204, 96.6, 'en');
+ * ```
  */
 export function generateFallbackChatResponse(
   query: string,

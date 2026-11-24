@@ -1,7 +1,10 @@
 import { ActionPlanResponse, SupportedLanguage, SimulatorInputs } from '../domain/types';
 import { generateFallbackActionPlan, generateFallbackChatResponse } from './fallback-service';
 
-interface GenerateActionPlanParams {
+/**
+ * Parameter interface for generating AI-driven personalized action plans.
+ */
+export interface GenerateActionPlanParams {
   cityId: string;
   cityName: string;
   language: SupportedLanguage;
@@ -21,8 +24,25 @@ interface GenerateActionPlanParams {
 
 /**
  * Structured GenAI Action Engine.
- * Primary: Google Gemini with JSON Schema enforcement.
- * Fallover: Deterministic Rules Engine (Zero-Downtime Fallback).
+ * Primary: Google Gemini with JSON Schema enforcement and 6-second timeout.
+ * Fallover: AerisPulse Deterministic Rules Engine (Zero-Downtime Fallback).
+ *
+ * @param params - Ambient meteorological data, pollutant levels, user lifestyle parameters, and locale
+ * @returns {Promise<ActionPlanResponse>} Structured clinical directives response object
+ *
+ * @example
+ * ```ts
+ * const plan = await generateActionPlanWithAI({
+ *   cityId: 'delhi_ncr',
+ *   cityName: 'Delhi NCR',
+ *   language: 'en',
+ *   aqiUs: 204,
+ *   primaryPollutant: 'PM2.5',
+ *   primaryPollutantConcentration: 96.6,
+ *   pollutants: { pm25: 96.6, pm10: 99.0, no2: 27.7, so2: 22.8, co: 880.0, o3: 62.0 },
+ *   simulatorInputs: DEFAULT_SIMULATOR_INPUTS,
+ * });
+ * ```
  */
 export async function generateActionPlanWithAI(
   params: GenerateActionPlanParams
@@ -131,7 +151,19 @@ Respond with strict JSON matching this exact structure:
 
 /**
  * Streams grounded chat responses via Server-Sent Events (SSE).
- * Uses XML boundary fence isolation against prompt injections.
+ * Implements XML boundary fence isolation against prompt injections and malicious breakouts.
+ *
+ * @param message - User query text
+ * @param cityName - Active metropolitan corridor name
+ * @param aqiUs - Active US EPA Air Quality Index value
+ * @param pm25 - Active PM2.5 particulate mass concentration in µg/m³
+ * @param language - Active locale ('en' | 'ta' | 'hi')
+ * @returns {Promise<ReadableStream<Uint8Array>>} Chunked binary stream compatible with Web ReadableStream API
+ *
+ * @example
+ * ```ts
+ * const stream = await streamGroundedChat('Is it safe to cycle today?', 'Delhi NCR', 204, 96.6, 'en');
+ * ```
  */
 export async function streamGroundedChat(
   message: string,

@@ -4,12 +4,28 @@ import React from 'react';
 import { AtmosphericTelemetry, SupportedLanguage } from '@/domain/types';
 import { TRANSLATIONS } from '@/domain/translations';
 
-interface ChemicalMatrixProps {
+/**
+ * Properties for the ChemicalMatrix component.
+ */
+export interface ChemicalMatrixProps {
+  /** Active multi-pollutant atmospheric telemetry dataset */
   telemetry: AtmosphericTelemetry;
+  /** Active internationalization locale */
   language: SupportedLanguage;
 }
 
-export const ChemicalMatrix: React.FC<ChemicalMatrixProps> = ({ telemetry, language }) => {
+/**
+ * Six-axis chemical matrix displaying real-time mass concentrations of criteria pollutants:
+ * PM2.5 (Fine Aerosol), PM10 (Coarse Dust), NO₂ (Combustion Gas), SO₂ (Industrial SOx),
+ * O₃ (Surface Ozone), and CO (Carbon Monoxide).
+ *
+ * @param props - ChemicalMatrixProps configuration
+ * @returns {JSX.Element} Rendered six-axis chemical concentration grid
+ */
+export const ChemicalMatrix: React.FC<ChemicalMatrixProps> = ({
+  telemetry,
+  language,
+}): React.JSX.Element => {
   const t = TRANSLATIONS[language];
 
   const chemicals = [

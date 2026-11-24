@@ -2,15 +2,25 @@
 
 import React from 'react';
 
-interface A11yLiveAnnouncerProps {
+/**
+ * Properties for the A11yLiveAnnouncer component.
+ */
+export interface A11yLiveAnnouncerProps {
+  /** Screen reader notification message string */
   message: string;
 }
 
 /**
- * Visually hidden screen-reader live region complying with WCAG 2.2 AA.
- * Announces dynamic updates (telemetry changes, calculation recalculations, action plans).
+ * Visually hidden screen-reader live region complying with WCAG 2.1 AA and Section 508.
+ * Dynamically announces updates (telemetry changes, calculation recalculations, action plans)
+ * to assistive screen reader technologies with `polite` priority.
+ *
+ * @param props - A11yLiveAnnouncerProps configuration
+ * @returns {JSX.Element} Invisible live aria region
  */
-export const A11yLiveAnnouncer: React.FC<A11yLiveAnnouncerProps> = ({ message }) => {
+export const A11yLiveAnnouncer: React.FC<A11yLiveAnnouncerProps> = ({
+  message,
+}): React.JSX.Element => {
   return (
     <div
       role="status"

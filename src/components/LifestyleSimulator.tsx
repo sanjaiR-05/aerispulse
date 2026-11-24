@@ -5,19 +5,36 @@ import { Sliders, Wind, Shield, DollarSign, Leaf, Heart } from 'lucide-react';
 import { CommuteMode, MaskGrade, SimulatorInputs, SimulatorOutputs, SupportedLanguage } from '@/domain/types';
 import { TRANSLATIONS } from '@/domain/translations';
 
-interface LifestyleSimulatorProps {
+/**
+ * Properties for the LifestyleSimulator component.
+ */
+export interface LifestyleSimulatorProps {
+  /** Active user lifestyle simulator parameter configuration */
   inputs: SimulatorInputs;
+  /** State modification dispatcher callback */
   onInputChange: (newInputs: SimulatorInputs) => void;
+  /** Deterministic mathematical calculation outputs derived synchronously */
   outputs: SimulatorOutputs;
+  /** Active internationalization locale */
   language: SupportedLanguage;
 }
 
+/**
+ * Interactive What-If Lifestyle Simulator component.
+ * Allows users to manipulate commute mode, transit distance, mask filtration,
+ * indoor true HEPA purification, and outdoor cardio exposure hours.
+ * Computes instantaneous clinical dose reduction, carbon abatement, healthcare savings,
+ * and Personal Health Shield defense index with zero lag (<1ms).
+ *
+ * @param props - LifestyleSimulatorProps configuration
+ * @returns {JSX.Element} Rendered interactive lifestyle simulator
+ */
 export const LifestyleSimulator: React.FC<LifestyleSimulatorProps> = ({
   inputs,
   onInputChange,
   outputs,
   language,
-}) => {
+}): React.JSX.Element => {
   const t = TRANSLATIONS[language];
 
   const handleModeChange = (mode: CommuteMode) => {

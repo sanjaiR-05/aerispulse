@@ -1,8 +1,33 @@
 import { SimulatorInputs } from '../domain/types';
 
 /**
- * Calculates Personal Health Shield Score (0-100), an individual defense index
- * combining respiratory protection, indoor filtration, and commute mitigation.
+ * Calculates the Personal Health Shield Score (0-100), an individual epidemiological defense index
+ * combining respiratory barrier protection, indoor HEPA particulate clearance, transit mode attenuation,
+ * and high-ventilation outdoor cardio exposure penalties under elevated AQI conditions.
+ *
+ * Scoring Weights:
+ * - Baseline Defense: 10 pts
+ * - Mask Grade: N95/FFP2 (+45 pts) | Surgical/Cloth (+20 pts) | None (+0 pts)
+ * - Indoor True HEPA Recirculation: (+40 pts)
+ * - Metro / Electric Bus Cabin: (+3 pts)
+ * - Unprotected High-Exertion Cardio Penalty: Up to -5 pts/hour when AQI > 150
+ * - Clean Ambient Air Bonus: AQI <= 50 (floor 85 pts) | AQI <= 100 (floor 65 pts)
+ *
+ * @param inputs - Active lifestyle simulator behavioral inputs
+ * @param aqi - Real-time US EPA Air Quality Index of the active region
+ * @returns {number} Normalized defense score bounded in [0, 100]
+ *
+ * @example
+ * ```ts
+ * const shieldScore = calculatePersonalHealthShieldScore({
+ *   commuteMode: 'metro_electric_bus',
+ *   commuteDistanceKm: 15,
+ *   maskGrade: 'n95_ffp2',
+ *   indoorHepaActive: true,
+ *   outdoorCardioHours: 1,
+ * }, 204);
+ * // Returns 98
+ * ```
  */
 export function calculatePersonalHealthShieldScore(
   inputs: SimulatorInputs,
