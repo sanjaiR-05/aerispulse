@@ -1,14 +1,14 @@
 # AerisPulse — Urban Air Quality & Climate Health Intelligence System
 
-[![CI/CD Pipeline](https://github.com/sandysaniit0508/aerispulse/actions/workflows/ci.yml/badge.svg)](https://github.com/sandysaniit0508/aerispulse/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-190%20passing-emerald)](https://github.com/sandysaniit0508/aerispulse)
-[![Coverage](https://img.shields.io/badge/coverage-98.3%25-brightgreen)](https://github.com/sandysaniit0508/aerispulse)
-[![WCAG](https://img.shields.io/badge/WCAG%202.2%20AA-0%20violations-blue)](https://github.com/sandysaniit0508/aerispulse)
+[![CI/CD Pipeline](https://github.com/sanjaiR-05/aerispulse/actions/workflows/ci.yml/badge.svg)](https://github.com/sanjaiR-05/aerispulse/actions/workflows/ci.yml)
+[![Tests](https://img.shields.io/badge/tests-190%20passing-emerald)](https://github.com/sanjaiR-05/aerispulse)
+[![Coverage](https://img.shields.io/badge/coverage-98.3%25-brightgreen)](https://github.com/sanjaiR-05/aerispulse)
+[![WCAG](https://img.shields.io/badge/WCAG%202.2%20AA-0%20violations-blue)](https://github.com/sanjaiR-05/aerispulse)
 [![Next.js](https://img.shields.io/badge/Next.js-15.1.0-black)](https://nextjs.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 > **Live Deployment:** [https://aerispulse.vercel.app](https://aerispulse.vercel.app)  
-> **Automated HD Walkthrough:** [Download 1080p Walkthrough](https://github.com/sandysaniit0508/aerispulse/releases/download/v1.0.0/aerispulse_walkthrough_1080p.mp4)
+> **Automated HD Walkthrough:** [Download 1080p Walkthrough](https://github.com/sanjaiR-05/aerispulse/releases/download/v1.0.0/aerispulse_walkthrough_1080p.mp4)
 
 ---
 
@@ -129,7 +129,7 @@ npm run build
 
 ```bash
 # 1. Clone repository
-git clone https://github.com/sandysaniit0508/aerispulse.git
+git clone https://github.com/sanjaiR-05/aerispulse.git
 cd aerispulse
 
 # 2. Install dependencies

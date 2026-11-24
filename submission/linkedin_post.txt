@@ -19,7 +19,7 @@ We built AerisPulse from the ground up to redefine how citizens and public healt
 • Tree-shaken production client JS bundle under 125 KB
 
 🔗 Explore the Live Platform: https://aerispulse.vercel.app
-💻 Open Source Repository: https://github.com/sandysaniit0508/aerispulse
-📹 Walkthrough Video: https://github.com/sandysaniit0508/aerispulse/releases/download/v1.0.0/aerispulse_walkthrough_1080p.mp4
+💻 Open Source Repository: https://github.com/sanjaiR-05/aerispulse
+📹 Walkthrough Video: https://github.com/sanjaiR-05/aerispulse/releases/download/v1.0.0/aerispulse_walkthrough_1080p.mp4
 
 #GenAI #CleanTech #PublicHealth #FullStack #Nextjs #TypeScript #Accessibility #OpenSource #AirQuality #ClimateAction

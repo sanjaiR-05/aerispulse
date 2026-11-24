@@ -16,10 +16,10 @@ Urban Air Quality Assistant / Climate & Health Intelligence / GenAI Impact
 https://aerispulse.vercel.app
 
 5. PUBLIC GITHUB REPOSITORY URL:
-https://github.com/sandysaniit0508/aerispulse
+https://github.com/sanjaiR-05/aerispulse
 
 6. DEMO VIDEO WALKTHROUGH (1080p 60fps MP4):
-https://github.com/sandysaniit0508/aerispulse/releases/download/v1.0.0/aerispulse_walkthrough_1080p.mp4
+https://github.com/sanjaiR-05/aerispulse/releases/download/v1.0.0/aerispulse_walkthrough_1080p.mp4
 (Local artifact: C:\Users\sandy\Downloads\aerispulse_walkthrough_1080p.mp4)
 
 7. PROBLEM STATEMENT & BACKGROUND:
