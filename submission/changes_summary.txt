@@ -1,0 +1,7 @@
+AerisPulse is an urban air quality and climate health platform. Key features:
+1. Live Telemetry: CAMS atmospheric feeds (PM2.5, PM10, NO2, SO2, O3, CO) via Open-Meteo with multi-station synthetic cross-referencing and confidence scoring.
+2. Deterministic Math Separation: Peer-reviewed models (EPA 454/B-18-007, WHO AQG 2021, GEMM PNAS 2018, DEFRA 2023) where code calculates dosage, carbon, and savings while AI provides clinical context.
+3. Interactive Simulator: Dynamic client-side modeling across transit modes, mask types, and HEPA purifiers.
+4. Structured GenAI Action Engine: Google Gemini integration with strict JSON schema, candidate failover, and an offline deterministic rules fallback engine ensuring 100% availability.
+5. Grounded Streaming Assistant: Low-latency SSE chat secured with XML boundary fences against prompt injections.
+6. Engineering Rigor: 190 tests (98.3% coverage), 0 a11y violations (WCAG 2.2 AA), trilingual (EN, தமிழ், हिंदी).

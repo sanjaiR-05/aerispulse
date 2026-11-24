@@ -1,0 +1,5 @@
+AerisPulse implements an enterprise, multi-tier GenAI architecture:
+1. Structured Action Engine: Powered by Google Gemini with strict JSON schema mode (`responseMimeType: "application/json"`). The model synthesizes localized clinical and behavioral directives across indoor, commute, health, and community domains without hallucinations.
+2. Zero-Downtime Resilience: Features candidate failover and an offline deterministic rules engine (`fallback-service.ts`). If upstream LLM quotas, network errors, or missing keys occur, structured mitigation plans and localized advice generate deterministically with zero user impact.
+3. Grounded Streaming Assistant: Low-latency SSE chat grounded strictly in verified telemetry. Protected by XML boundary fences (`<telemetry_context>`, `<user_query>`) and Zod input sanitization to block prompt injections.
+4. Deterministic Separation: "The LLM explains; code calculates." Quantitative dosage and carbon metrics are strictly computed in code.

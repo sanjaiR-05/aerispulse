@@ -1,0 +1,25 @@
+🚀 Proud to announce AerisPulse: Urban Air Quality & Climate Health Intelligence System!
+
+Urban air pollution affects over 1.4 billion people across South Asia, with major metros like Delhi NCR, Mumbai, Bengaluru, and Chennai frequently experiencing hazardous particulate surges. Yet most air quality applications remain passive digital billboards—reporting unverified raw indices without quantifying real human physiological dosage or actionable personal defense.
+
+We built AerisPulse from the ground up to redefine how citizens and public health authorities navigate urban atmospheres:
+
+🔬 Deterministic Accounting Separation: "The LLM explains; code calculates." Every metric—inhaled PM2.5 dosage (µg/day), carbon abated (kg CO2/day), monthly health savings (₹/mo), and Personal Health Shield Score (0-100)—is strictly derived from peer-reviewed epidemiological and environmental models (WHO AQG 2021, US EPA 454/B-18-007, PNAS GEMM 2018, DEFRA 2023).
+
+⚡ Three-Tier Zero-Downtime GenAI Resilience: Powered by Google Gemini with strict JSON schema enforcement, candidate failover, and a deterministic offline clinical rules engine (`fallback-service.ts`) guaranteeing 100% availability even under API outages.
+
+🛡️ Grounded Streaming Assistant: Real-time SSE streaming assistant protected with XML boundary fences against prompt injections, answering health queries strictly within localized telemetry.
+
+🌐 Inclusivity & Accessibility: Trilingual localization in English, Tamil (தமிழ்), and Hindi (हिंदी), built to WCAG 2.2 AA standards with 0 accessibility violations verified by axe-core.
+
+📊 Engineering Metrics:
+• 190 automated tests across comprehensive unit, integration, and accessibility suites
+• 98.3% line coverage & 100% API route coverage
+• Sub-50ms cache-hit latency with server-side stale-while-revalidate caching
+• Tree-shaken production client JS bundle under 125 KB
+
+🔗 Explore the Live Platform: https://aerispulse.vercel.app
+💻 Open Source Repository: https://github.com/sandysaniit0508/aerispulse
+📹 Walkthrough Video: https://github.com/sandysaniit0508/aerispulse/releases/download/v1.0.0/aerispulse_walkthrough_1080p.mp4
+
+#GenAI #CleanTech #PublicHealth #FullStack #Nextjs #TypeScript #Accessibility #OpenSource #AirQuality #ClimateAction

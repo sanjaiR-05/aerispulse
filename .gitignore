@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Testing & Coverage
+coverage/
+.nyc_output/
+
+# Next.js
+.next/
+out/
+build/
+dist/
+*.tsbuildinfo
+
+# Environment Variables & Secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.pem
+*.key
+
+# Large Media & Recordings
+recordings/*.mp4
+recordings/*.webm
+screenshots/*.png
+*.mp4
+*.exe
+*.msi
+
+# OS & Editor
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
