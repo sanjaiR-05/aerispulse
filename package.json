@@ -4,6 +4,27 @@
   "description": "Urban air quality and climate health intelligence: deterministic dosage, carbon and economic models with grounded GenAI synthesis.",
   "private": true,
   "license": "MIT",
+  "author": "Sanjai R <https://github.com/sanjaiR-05>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sanjaiR-05/aerispulse.git"
+  },
+  "homepage": "https://project-kappa-ten-61.vercel.app",
+  "bugs": "https://github.com/sanjaiR-05/aerispulse/issues",
+  "keywords": [
+    "air-quality",
+    "climate-health",
+    "cams",
+    "open-meteo",
+    "epa-aqi",
+    "who-aqg",
+    "nextjs",
+    "react19",
+    "tailwind",
+    "gemini-ai",
+    "a11y",
+    "wcag"
+  ],
   "engines": {
     "node": ">=20.0.0"
   },

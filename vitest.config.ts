@@ -22,6 +22,7 @@ export default defineConfig({
         'src/test/**',
         'src/**/index.ts',
         'src/app/layout.tsx',
+        'src/app/global-error.tsx',
         'src/domain/types.ts',
         '**/*.d.ts',
       ],

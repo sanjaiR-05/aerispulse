@@ -1,10 +1,9 @@
 # AerisPulse — Urban Air Quality & Climate Health Intelligence System
 
-[![CI/CD Pipeline](https://github.com/sanjaiR-05/aerispulse/actions/workflows/ci.yml/badge.svg)](https://github.com/sanjaiR-05/aerispulse/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-232%20passing-emerald)](https://github.com/sanjaiR-05/aerispulse)
+[![Tests](https://img.shields.io/badge/tests-236%20passing-emerald)](https://github.com/sanjaiR-05/aerispulse)
 [![Coverage](https://img.shields.io/badge/coverage-99.3%25-brightgreen)](https://github.com/sanjaiR-05/aerispulse)
-[![WCAG](https://img.shields.io/badge/WCAG%202.2%20AA-0%20violations-blue)](https://github.com/sanjaiR-05/aerispulse)
-[![Next.js](https://img.shields.io/badge/Next.js-15.1.0-black)](https://nextjs.org/)
+[![WCAG](https://img.shields.io/badge/WCAG%202.1%20AA-0%20violations-blue)](https://github.com/sanjaiR-05/aerispulse)
+[![Next.js](https://img.shields.io/badge/Next.js-15.1.12-black)](https://nextjs.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 > **Live Deployment:** [https://project-kappa-ten-61.vercel.app](https://project-kappa-ten-61.vercel.app)  
@@ -30,7 +29,14 @@ src/
 │   ├── types.ts             # Strict TypeScript domain interfaces
 │   ├── constants.ts         # EPA breakpoints, DEFRA factors, Metro presets
 │   ├── schemas.ts           # Zod runtime payload validators & sanitizers
-│   └── translations.ts      # Full English, Tamil, and Hindi dictionaries
+│   ├── translations.ts      # Full English, Tamil, and Hindi dictionaries
+│   └── index.ts             # Barrel module exports
+├── hooks/                   # Decoupled React State & Logic Hooks
+│   ├── useThemeLanguage.ts  # Theme (light/dark) & i18n localization
+│   ├── useTelemetry.ts      # CAMS atmospheric data fetch & cache state
+│   ├── useSimulator.ts      # What-If lifestyle simulator & math derivations
+│   ├── useActionPlan.ts     # GenAI action directives & fallback state
+│   └── index.ts             # Barrel module exports
 ├── services/                # Deterministic Engines & External Integrations
 │   ├── aqi-calculator.ts    # US EPA 454/B-18-007 piecewise linear interpolation
 │   ├── dosage-calculator.ts # Human minute ventilation & inhaled PM2.5 dosage
@@ -38,13 +44,12 @@ src/
 │   ├── economic-calculator.ts # Outpatient medication & sick day economic savings
 │   ├── shield-calculator.ts # Personal Health Shield Score (0-100)
 │   ├── telemetry-service.ts # Open-Meteo CAMS atmospheric telemetry client
-│   ├── fallback-telemetry.ts # Offline snapshots with calculator-derived AQI/CAQI
 │   ├── cache-service.ts     # In-memory Stale-While-Revalidate TTL cache
-│   ├── rate-limiter.ts      # Sliding-window IP rate limiter with idle-IP eviction
-│   ├── api-guard.ts         # Shared CSRF + rate-limit policy for every route
-│   ├── sse-parser.ts        # Buffered Server-Sent Events decoder
+│   ├── rate-limiter.ts      # Sliding-window IP rate limiter
+│   ├── security.ts          # CSRF origin validation & IETF rate limit headers
 │   ├── fallback-service.ts  # Deterministic clinical rules engine (zero-downtime)
-│   └── genai-service.ts     # Google Gemini API with Zod-validated JSON and SSE normalisation
+│   ├── genai-service.ts     # Google Gemini API with JSON Schema mode & failover
+│   └── index.ts             # Barrel module exports
 ├── components/              # Accessible Semantic React Components
 │   ├── Header.tsx           # Language switcher, dark mode toggle, branding
 │   ├── MetroPresets.tsx     # 1-Click 5-second evaluation presets
@@ -54,13 +59,19 @@ src/
 │   ├── ActionPlanSection.tsx  # Structured GenAI clinical directives
 │   ├── StreamingChat.tsx    # Grounded SSE streaming atmospheric assistant
 │   ├── Footer.tsx           # Peer-reviewed methodology citations & a11y badge
-│   └── A11yLiveAnnouncer.tsx # WCAG 2.2 AA ARIA live region status announcer
+│   ├── A11yLiveAnnouncer.tsx # WCAG 2.1 AA ARIA live region status announcer
+│   └── index.ts             # Barrel module exports
 └── app/                     # Next.js 15 App Router & Serverless Route Handlers
     ├── api/telemetry/       # In-memory cached atmospheric feed endpoint
     ├── api/action-plan/     # Rate-limited structured action synthesis
     ├── api/chat/            # Rate-limited SSE streaming chat
     ├── api/health/          # Health check endpoint (HTTP 200)
     ├── error.tsx            # Client error boundary with session recovery
+    ├── global-error.tsx     # Root error boundary
+    ├── not-found.tsx        # Custom accessible 404 page
+    ├── loading.tsx          # Streaming Suspense skeleton loader
+    ├── robots.ts            # Dynamic crawler protection policy
+    ├── sitemap.ts           # Dynamic XML sitemap generator
     ├── layout.tsx           # Global root layout with skip navigation
     └── page.tsx             # Main client dashboard orchestration
 ```

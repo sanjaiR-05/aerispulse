@@ -82,3 +82,14 @@
   3. Centralize CSRF and rate-limit enforcement in `api-guard.ts`, applied identically by every route handler, with advertised headers matching enforced policy.
   4. Validate model output with `ActionPlanAiResponseSchema` and normalise Gemini's SSE frames into the `{ text }` envelope consumed by the client, rejecting malformed payloads in favour of the deterministic engine.
 - **Consequences:** One place to change a coefficient, no divergent demo figures, consistent guard behaviour, and no silent empty AI responses.
+
+
+---
+
+## ADR 009: Decoupled Custom Hooks State Layer & Error Boundary Hierarchy
+- **Status:** Accepted
+- **Context:** To ensure clean separation of concerns and 100% testability of stateful logic, `page.tsx` must not contain raw state or direct HTTP orchestration. Furthermore, production Next.js deployments require explicit Error and Not-Found boundaries.
+- **Decision:**
+  1. Decompose dashboard state into four dedicated custom hooks under `src/hooks/`: `useTelemetry`, `useSimulator`, `useActionPlan`, and `useThemeLanguage`.
+  2. Implement full Next.js App Router boundary hierarchy: `error.tsx` (client exception recovery), `global-error.tsx` (root recovery), `not-found.tsx` (accessible 404), `loading.tsx` (streaming Suspense skeleton), `robots.ts` (API route protection), and `sitemap.ts`.
+- **Consequences:** Pure presentation layer in `page.tsx`, zero unhandled runtime crashes, and comprehensive testability.
